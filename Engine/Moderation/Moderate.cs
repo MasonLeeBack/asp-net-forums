@@ -32,12 +32,33 @@ namespace AspNetForums {
         /// 
         // ********************************************************************/ 
         public static bool CanEditPost(String Username, int PostID) {			
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             return dp.CanEditPost(Username, PostID);
         }
 		
+        // *********************************************************************
+        //  GetQueueStatus
+        //
+        /// <summary>
+        /// Returns details about the moderation queue
+        /// </summary>
+        /// <param name="username">The username making the request</param>
+        /// <param name="forumId">Forum to check-on</param>
+        /// <returns>A boolean value: true if the user can edit the post, false otherwise.</returns>
+        /// <remarks>Moderators can edit posts that are still waiting for approval in the forum(s) they 
+        /// are cleared to moderate.  Forum administrators may edit any post, awaiting approval or not,
+        /// at any time.</remarks>
+        /// 
+        // ********************************************************************/ 
+        public static ModerationQueueStatus GetQueueStatus(int forumID, string username) {
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
+
+            return dp.GetQueueStatus(forumID, username);
+        }
+
         // *********************************************************************
         //  GetMostActiveModerators
         //
@@ -52,14 +73,14 @@ namespace AspNetForums {
 
             // Only update once every 24 hours
             if (HttpContext.Current.Cache["MostActiveModerators"] == null) {
-                // Create Instance of the IWebForumsDataProviderBase
-                IWebForumsDataProviderBase dp = DataProvider.Instance();
+                // Create Instance of the IDataProviderBase
+                IDataProviderBase dp = DataProvider.Instance();
 
                 // Get the collection
                 moderators = dp.GetMostActiveModerators();
 
                 // add to the cache
-                HttpContext.Current.Cache.Insert("MostActiveModerators", moderators, null, DateTime.Now.AddMinutes(5), TimeSpan.Zero);
+                HttpContext.Current.Cache.Insert("MostActiveModerators", moderators, null, DateTime.Now.AddDays(1), TimeSpan.Zero);
 
             }
 
@@ -76,10 +97,23 @@ namespace AspNetForums {
         /// 
         // ********************************************************************/ 
         public static ModerationAuditCollection GetModerationAuditSummary() {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
 
-            return dp.GetModerationAuditSummary();
+            ModerationAuditCollection moderationAudit;
+
+            // Only update once every 24 hours
+            if (HttpContext.Current.Cache["ModerationAuditSummary"] == null) {
+
+                // Create Instance of the IDataProviderBase
+                IDataProviderBase dp = DataProvider.Instance();
+
+                // Get the audit details
+                moderationAudit = dp.GetModerationAuditSummary();
+
+                // Store in Cache
+                HttpContext.Current.Cache.Insert("ModerationAuditSummary", moderationAudit, null, DateTime.Now.AddDays(1), TimeSpan.Zero);
+            }
+
+            return (ModerationAuditCollection) HttpContext.Current.Cache["ModerationAuditSummary"];
         }
             
 
@@ -97,8 +131,8 @@ namespace AspNetForums {
         public static ForumGroupCollection GetForumGroupsForModeration(string username) {
             ForumGroupCollection forumGroups;
 
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             // Get the collection
             forumGroups = dp.GetForumGroupsForModeration(username);
@@ -123,8 +157,8 @@ namespace AspNetForums {
         /// 
         // ********************************************************************/ 
         public static ThreadCollection GetAllUnmoderatedThreads(int forumID, int pageSize, int pageIndex, string username) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             return dp.GetAllUnmoderatedThreads(forumID, pageSize, pageIndex, username);
         }
@@ -144,8 +178,8 @@ namespace AspNetForums {
         // ********************************************************************/ 
         /* TODO: REMOVE?
         public static int GetTotalUnModeratedThreadsInForum(int ForumID, DateTime maxDateTime, DateTime minDateTime, string username, bool unreadThreadsOnly) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             return dp.GetTotalUnModeratedThreadsInForum(ForumID, maxDateTime, minDateTime, username, unreadThreadsOnly);
         }
@@ -162,8 +196,8 @@ namespace AspNetForums {
         /// 
         // ********************************************************************/ 
         public static ModeratedForumCollection GetForumsForModerationByForumGroupId(int forumGroupId, string username) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             return dp.GetForumsForModerationByForumGroupId(forumGroupId, username);
         }
@@ -188,8 +222,8 @@ namespace AspNetForums {
         /// 
         // ********************************************************************/ 
         public static MovedPostStatus MovePost(int postID, int moveToForumID, String approvedBy, bool sendEmail) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             MovedPostStatus status = dp.MovePost(postID, moveToForumID, approvedBy);
 
@@ -227,8 +261,8 @@ namespace AspNetForums {
         /// 
         // ********************************************************************/ 
         public static void DeletePost(int postID, string approvedBy, string reasonForDeleting, bool sendEmail) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             // delete the post - if we succeed, send an email to the person who had their
             // post deleted, explaining why it was deleted
@@ -271,8 +305,8 @@ namespace AspNetForums {
         /// 
         // ********************************************************************/ 
         public static void ApprovePost(int postID, string approvedBy, string updateUserAsTrusted) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             bool firstTimeApproved = dp.ApprovePost(postID, approvedBy, updateUserAsTrusted);
 
@@ -299,8 +333,8 @@ namespace AspNetForums {
         // ********************************************************************/ 
         // TODO: REMOVE?
         public static bool CanModerate(String Username) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             return dp.CanModerate(Username);
         }
@@ -319,8 +353,8 @@ namespace AspNetForums {
         /// 
         // ********************************************************************/ 
         public static bool CanModerate(String username, int forumId) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             return dp.CanModerate(username, forumId);
         }
@@ -340,8 +374,8 @@ namespace AspNetForums {
         // TODO: REMOVE?
         /*
         public static PostCollection GetPostsAwaitingModeration(String Username) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             return dp.GetPostsAwaitingModeration(Username);
         }
@@ -357,8 +391,8 @@ namespace AspNetForums {
         /// 
         // ********************************************************************/ 
         public static bool UserHasPostsAwaitingModeration(String username) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             return dp.UserHasPostsAwaitingModeration(username);
         }
@@ -371,8 +405,8 @@ namespace AspNetForums {
         /// forum.</returns>
         // TODO: REMOVE?
         public static ModeratedForumCollection GetForumModerators(int ForumID) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             return dp.GetForumModerators(ForumID);
         }

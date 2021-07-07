@@ -28,7 +28,7 @@
   </tr>
   <tr>
     <td align="left" valign="top">
-     <AspNetForums:WhereAmI ShowHome="true" id="Whereami2" runat="server" NAME="Whereami2" />
+     <AspNetForums:WhereAmI ShowHome="true" DynamicMenu="false" id="Whereami2" runat="server" NAME="Whereami2" />
 <%--
       <AspNetForums:JumpDropDownList runat="server" ID="Jumpdropdownlist1" />
 --%>

@@ -8,6 +8,7 @@ namespace AspNetForums.Components {
 
         // Member Variables
         int forumID = 0;				// Unique forum identifier
+        int parentId = 0;
         int daysToView = 0;			    // Number of days to view for the forum
         int totalPosts = -1;			// Total posts in the forum
         int totalThreads = -1;			// Total threads in the forum
@@ -24,6 +25,8 @@ namespace AspNetForums.Components {
         int mostRecentThreadId = 0;     // Post ID of the most recent thread
         DateTime dateCreated;			// The date/time the forum was created
         DateTime lastUserActivity;      // Last time the user was isActive in the forum
+        byte[] displayMask;
+
 
 
         // *********************************************************************
@@ -88,6 +91,43 @@ namespace AspNetForums.Components {
                     forumID = value;
             }
         }
+
+        
+        // *********************************************************************
+        //  ParentId
+        //
+        /// <summary>
+        /// If ParentId > 0 this forum has a parent and is not a top-level forum
+        /// </summary>
+        // ********************************************************************/
+        public int ParentId {
+            get { return parentId; }
+            set {
+                if (value < 0)
+                    parentId = 0;
+                else
+                    parentId = value;
+            }
+        }
+
+        
+        // *********************************************************************
+        //  DisplayMask
+        //
+        /// <summary>
+        /// Bit mask used to control what forums to display for the current user
+        /// </summary>
+        // ********************************************************************/
+        public byte[] DisplayMask {
+            get { 
+                return displayMask; 
+            }
+            set {
+                displayMask = value;
+            }
+        }
+
+        
 
         public int ForumGroupId {
             get { return forumGroupId; }

@@ -13,6 +13,7 @@ using System.Text.RegularExpressions;
 
 
 namespace AspNetForums.Components {
+
     /************* DECLARE ENUMERATIONS ****************/
     /// <summary>
     /// The NextPrevMessagesPosition enumeration is used with the ForumView Web control to indicate the position of the
@@ -23,17 +24,17 @@ namespace AspNetForums.Components {
         /// Places the Next/Prev Messages bar just at the top of the forum post listing.
         /// </summary>
         Top, 
-		
+        
         /// <summary>
         /// Places the Next/Prev Messages bar just at the bottom of the forum post listing.
         /// </summary>
         Bottom, 
-		
+        
         /// <summary>
         /// Places the Next/Prev Messages bar at the top and the bottom of the forum post listing.
         /// </summary>
         Both,
-	
+    
         /// <summary>
         /// Does not display the Next/Prev Messages bar.
         /// </summary>
@@ -50,17 +51,17 @@ namespace AspNetForums.Components {
         /// Pass this value in to have the default forum view setting used.
         /// </summary>
         NotSet = -1, 
-		
+        
         /// <summary>
         /// Specifies to display the forum in a Flat mode.
         /// </summary>
         Flat = 0, 
-		
+        
         /// <summary>
         /// Specifies to display the forum in the Mixed mode.
         /// </summary>
         Mixed = 1, 
-		
+        
         /// <summary>
         /// Specifies to display the forum in Threaded mode.
         /// </summary>
@@ -75,12 +76,12 @@ namespace AspNetForums.Components {
         /// Specifies that the user is creating a new post.
         /// </summary>
         NewPost, 
-		
+        
         /// <summary>
         /// Specifies that the user is replying to an existing post.
         /// </summary>
         ReplyToPost, 
-		
+        
         /// <summary>
         /// Specifies that a  moderator or administrator is editing an existing post.
         /// </summary>
@@ -95,11 +96,26 @@ namespace AspNetForums.Components {
         /// Specifies that a new forum is being created.
         /// </summary>
         CreateForum, 
-		
+        
         /// <summary>
         /// Specifies that an existing forum is being edited.
         /// </summary>
         EditForum }
+
+    /// <summary>
+    ///  The CreateEditRoleMode enumeration defines what mode the CreateEditRole Web control assumes.
+    ///  The options are CreateRole, and EditRole.
+    /// </summary>
+    public enum CreateEditRoleMode {
+        /// <summary>
+        ///  Specifies that a new role is being created.
+        /// </summary>
+        CreateRole,
+        /// <summary>
+        ///  Specifies that an existing role is being edited.
+        /// </summary>
+        EditRole
+    }
 
     /// <summary>
     /// The DateTimeFormatEnum enumeration determines the date/time format returned by the AccountForTimezone
@@ -122,7 +138,8 @@ namespace AspNetForums.Components {
         /// <summary>
         /// Specifies to view a list of moderated forums for a particular user.
         /// </summary>
-        ViewForUser }
+        ViewForUser 
+    }
 
     /// <summary>
     /// The UserInfoEditMode enumeration determines the role the UserInfo Web control assumes.  The
@@ -133,7 +150,7 @@ namespace AspNetForums.Components {
         /// Indicates that the user is editing his or her personal user information.
         /// </summary>
         Edit, 
-		
+        
         /// <summary>
         /// Indicates that a user is viewing a user's information (not necessarily his or her own).
         /// </summary>
@@ -155,12 +172,13 @@ namespace AspNetForums.Components {
         /// Specifies that the PerformSearch method should apply the search query to the post body.
         /// </summary>
         PostsSearch, 
-		
+        
         /// <summary>
         /// Specifies that the PerformSearch method should apply the search query to the post's author's 
         /// Username.
         /// </summary>
-        PostsBySearch }
+        PostsBySearch 
+    }
 
     /// <summary>
     /// Indicates the return status for creating a new user.
@@ -170,22 +188,22 @@ namespace AspNetForums.Components {
         /// The user was not created for some unknown reason.
         /// </summary>
         UnknownFailure, 
-		
+        
         /// <summary>
         /// The user's account was successfully created.
         /// </summary>
         Created, 
-		
+        
         /// <summary>
         /// The user's account was not created because the user's desired username is already being used.
         /// </summary>
         DuplicateUsername, 
-		
+        
         /// <summary>
         /// The user's account was not created because the user's email address is already being used.
         /// </summary>
         DuplicateEmailAddress, 
-		
+        
         /// <summary>
         /// The user's account was not created because the user's desired username did not being with an
         /// alphabetic character.
@@ -200,12 +218,12 @@ namespace AspNetForums.Components {
         /// Searches for all words entered into the search terms.
         /// </summary>
         SearchAllWords, 
-		
+        
         /// <summary>
         /// Searches for any word entered as search terms.
         /// </summary>
         SearchAnyWord, 
-		
+        
         /// <summary>
         /// Searches for the EXACT search phrase entered in the search terms.
         /// </summary>
@@ -220,13 +238,13 @@ namespace AspNetForums.Components {
         /// already approved by another moderator.
         /// </summary>
         NotMoved, 
-		
+        
         /// <summary>
         /// The post was moved successfully to the specified forum, but is still waiting approval, since
         /// the moderator who moved the post lacked moderation rights to the forum the post was moved to.
         /// </summary>
         MovedButNotApproved, 
-		
+        
         /// <summary>
         /// The post was moved successfully to the specified forum and approved.
         /// </summary>
@@ -313,10 +331,8 @@ namespace AspNetForums.Components {
     /***************************************************/
 
     public class Globals {
-	
         // the HTML newline character
         public const String HtmlNewLine = "<br />";
-		
         public const String _appSettingsPrefix = "AspNetForumsSettings.";
 
         // *********************************************************************
@@ -331,19 +347,15 @@ namespace AspNetForums.Components {
         /// 
         // ********************************************************************/
         public static ITemplate LoadSkinnedTemplate(string virtualPathToTemplate, string templateKey, Page page) {
-
             ITemplate _template;
             CacheDependency fileDep;
-            HttpContext Context = HttpContext.Current;
 
             // Get the instance of the Cache
-            Cache Cache = Context.Cache;
+            Cache cache = HttpContext.Current.Cache;
 
-            // Attempt to load header template from Cache
-            if ((Cache[virtualPathToTemplate] == null) && (Cache[templateKey] != "TemplateNotFound")) {
-
+            // Attempt to load template from Cache
+            if ((cache[templateKey] == null) || (cache[templateKey] != typeof(FileNotFoundException))) {
                 try {
-
                     // Create a file dependency
                     fileDep = new CacheDependency(page.Server.MapPath(virtualPathToTemplate));
 
@@ -351,37 +363,34 @@ namespace AspNetForums.Components {
                     _template = page.LoadTemplate(virtualPathToTemplate);
 
                     // Add to cache
-                    Cache.Insert(templateKey, _template, fileDep);
+                    cache.Insert(templateKey, _template, fileDep);
 
                 } catch (FileNotFoundException fileNotFound) {
 
                     // Add a marker we can check for to skip this in the future
-                    Cache.Insert(templateKey, "FileNotFound");
+                    cache.Insert(templateKey, fileNotFound);
 
                     return null;
                 } catch (HttpException httpException) {
 
                     // Add a marker we can check for to skip this in the future
                     if (httpException.ErrorCode == -2147467259)
-                        Cache.Insert(templateKey, "FileNotFound");
+                        cache.Insert(templateKey, new FileNotFoundException("Template not found"));
                     else
                         throw httpException;
 
                     return null;
                 }
-
-
             } else {
                 return null;
             }
 
-            // return the template
-            return (ITemplate) Cache[templateKey];
-
+            // return the template from Cache
+            return (ITemplate) cache[templateKey];
         }
 
         public static string FormatSignature(string userSignature) {
-            if (userSignature != String.Empty)
+            if ( userSignature != null && userSignature.Length > 0 )
                 return "<hr size=\"1\" align=\"left\" width=\"15%\">" + Globals.FormatPostBody(userSignature);
 
             return null;
@@ -408,14 +417,9 @@ namespace AspNetForums.Components {
         /// <returns>A raw text subject line.</returns>
         /// <remarks>This function is only needed when editing an existing message or when replying to
         /// a message - it turns the HTML escaped characters back into their pre-escaped status.</remarks>
-        public static String HtmlDecode(String FormattedMessageSubject) {		
-            String strSubject = FormattedMessageSubject;
-			
-		
+        public static String HtmlDecode(String FormattedMessageSubject) {       
             // strip the HTML - i.e., turn < into &lt;, > into &gt;
-            strSubject = HttpContext.Current.Server.HtmlDecode(strSubject);
-			
-            return strSubject;
+            return HttpContext.Current.Server.HtmlDecode(FormattedMessageSubject);
         } 
 
         /// <summary>
@@ -425,13 +429,9 @@ namespace AspNetForums.Components {
         /// <returns>A raw text subject line.</returns>
         /// <remarks>This function is only needed when editing an existing message or when replying to
         /// a message - it turns the HTML escaped characters back into their pre-escaped status.</remarks>
-        public static String HtmlEncode(String FormattedMessageSubject) {		
-            String strSubject = FormattedMessageSubject;
-		
+        public static String HtmlEncode(String FormattedMessageSubject) {       
             // strip the HTML - i.e., turn < into &lt;, > into &gt;
-            strSubject = HttpContext.Current.Server.HtmlEncode(strSubject);
-			
-            return strSubject;
+            return HttpContext.Current.Server.HtmlEncode(FormattedMessageSubject);
         } 
 
         /************ PROPERTY SET/GET STATEMENTS **************/
@@ -480,7 +480,7 @@ namespace AspNetForums.Components {
                                 iValue = _defaultForumView;
                                 break;
                         }
-					
+                    
                     _str = iValue.ToString();
                     HttpContext.Current.Cache.Insert("webForums." + _settingName, _str);
                 }
@@ -495,8 +495,7 @@ namespace AspNetForums.Components {
         /// </summary>
         static public bool AllowDuplicatePosts {
             get {
-                NameValueCollection configSettings = (NameValueCollection)ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                return Convert.ToBoolean(configSettings["allowDuplicatePosts"]);
+                return SafeConfigBoolean("AspNetForumsSettings", "allowDuplicatePosts", false);
             }
         }
 
@@ -506,8 +505,7 @@ namespace AspNetForums.Components {
         /// </summary>
         static public String SmtpServer {
             get {
-                NameValueCollection configSettings = (NameValueCollection)ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                string smtpServer = configSettings["smtpServer"];
+                string smtpServer = SafeConfigString("AspNetForumsSettings", "smtpServer", string.Empty);
 
                 if (smtpServer.Length == 0 || smtpServer.ToUpper() == "DEFAULT")
                     smtpServer = "";
@@ -517,12 +515,11 @@ namespace AspNetForums.Components {
         }
 
         /// <summary>
-        /// Returns the Url to view a User's information
+        ///  The base URL for this web site
         /// </summary>
-        static public String WebSiteUrl {
+        static public String UrlWebSite {
             get {
-                NameValueCollection configSettings = (NameValueCollection) ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                return configSettings["webSiteUrl"];
+                return SafeConfigString("AspNetForumsSettings", "urlWebSite", string.Empty).Replace("^", "&");
             }
         }
 
@@ -534,14 +531,13 @@ namespace AspNetForums.Components {
         static public bool SendEmail {
             get { return SmtpServer.ToUpper() != "NONE"; }
         }
-		
+        
         /// <summary>
         /// Url path to the page implementing search features
         /// </summary>
         static public String UrlSearch {
             get {
-                NameValueCollection configSettings = (NameValueCollection)ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                return configSettings["urlSearch"];
+                return SafeConfigUrl("AspNetForumsSettings", "urlSearch", string.Empty).Replace("^", "&");
             }
         }
 
@@ -550,8 +546,7 @@ namespace AspNetForums.Components {
         /// </summary>
         static public String UrlRegister {
             get {
-                NameValueCollection configSettings = (NameValueCollection)ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                return configSettings["urlRegister"];
+                return SafeConfigUrl("AspNetForumsSettings", "urlRegister", string.Empty).Replace("^", "&");
             }
         }
         
@@ -560,8 +555,7 @@ namespace AspNetForums.Components {
         /// </summary>
         static public String UrlEditUserProfile {
             get {
-                NameValueCollection configSettings = (NameValueCollection)ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                return configSettings["urlEditUserProfile"];
+                return SafeConfigUrl("AspNetForumsSettings", "urlEditUserProfile", string.Empty).Replace("^", "&");
             }
         }
 
@@ -570,28 +564,20 @@ namespace AspNetForums.Components {
         /// </summary>
         static public String Skin {
             get {
-                NameValueCollection configSettings = (NameValueCollection)ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                return configSettings["Skin"];
+                if ( AvailableSkins.Length > 0 ) {
+                    return AvailableSkins[0];
+                }
+                
+                return "default";
             }
         }
 
         /// <summary>
-        /// Name of the default style to be applied
+        /// Available skins that can be used
         /// </summary>
-        static public String SiteStyle {
+        static public String[] AvailableSkins {
             get {
-                NameValueCollection configSettings = (NameValueCollection)ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                return configSettings["Style"];
-            }
-        }
-
-        /// <summary>
-        /// Available styles that can be used
-        /// </summary>
-        static public String[] SiteStyles {
-            get {
-                NameValueCollection configSettings = (NameValueCollection)ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                return configSettings["AvailableStyles"].Split(';');
+                return SafeConfigString("AspNetForumsSettings", "availableSkins", string.Empty).Split(';');
             }
         }
 
@@ -600,8 +586,16 @@ namespace AspNetForums.Components {
         /// </summary>
         static public String ApplicationVRoot {
             get {
-                NameValueCollection configSettings = (NameValueCollection)ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                return configSettings["ApplicationRoot"];
+                if (HttpContext.Current.Request.ApplicationPath == "/")
+                    return ForumsDirectory;
+                else
+                    return HttpContext.Current.Request.ApplicationPath;
+            }
+        }
+
+        static private string ForumsDirectory {
+            get {
+                return SafeConfigString("AspNetForumsSettings", "forumsDirectory", string.Empty);
             }
         }
         
@@ -610,8 +604,7 @@ namespace AspNetForums.Components {
         /// </summary>
         static public String DatabaseConnectionString {
             get {
-                NameValueCollection configSettings = (NameValueCollection) ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                return configSettings["connectionString"];
+                return SafeConfigString("AspNetForumsSettings", "connectionString", string.Empty);
             }
         }
 
@@ -620,8 +613,7 @@ namespace AspNetForums.Components {
         /// </summary>
         static public int PageSize {
             get {
-                NameValueCollection configSettings = (NameValueCollection) ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                return Convert.ToInt32(configSettings["pageSize"]);
+                return SafeConfigNumber("AspNetForumsSettings", "defaultPageSize", 25);
             }
         }
 
@@ -630,8 +622,7 @@ namespace AspNetForums.Components {
         /// </summary>
         static public string DateFormat {
             get {
-                NameValueCollection configSettings = (NameValueCollection) ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                return configSettings["defaultDateFormat"];
+                return SafeConfigString("AspNetForumsSettings", "defaultDateFormat", string.Empty);
             }
         }
 
@@ -640,38 +631,35 @@ namespace AspNetForums.Components {
         /// </summary>
         static public string TimeFormat {
             get {
-                NameValueCollection configSettings = (NameValueCollection) ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                return configSettings["defaultTimeFormat"];
+                return SafeConfigString("AspNetForumsSettings", "defaultTimeFormat", string.Empty);
             }
         }
 
         /// <summary>
-        /// Returns the path to the images directory
+        ///  Enables the use of full-text searches on the site.  This changes how the
+        ///  search criterion is built and which options are available to users.
         /// </summary>
-        static public String ImagePath {
+        static public bool EnableFullTextSearching {
             get {
-                NameValueCollection configSettings = (NameValueCollection) ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                return configSettings["imagesPath"];
+                return SafeConfigBoolean("AspNetForumsSettings", "enableFullTextSearching", false);
             }
         }
-		
+
         /// <summary>
         /// Returns the offset of the timezone of the database server
         /// </summary>
         static public int DBTimezone {
             get {
-                NameValueCollection configSettings = (NameValueCollection) ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                return Convert.ToInt32(configSettings["dbTimeZoneOffset"]);
+                return SafeConfigNumber("AspNetForumsSettings", "dbTimeZoneOffset", -5);
             }
         }
-		
+        
         /// <summary>
         /// Returns the Url to view a User's information
         /// </summary>
         static public String UrlUserProfile {
             get {
-                NameValueCollection configSettings = (NameValueCollection) ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                return configSettings["urlShowUserProfile"].Replace("^", "&");
+                return SafeConfigUrl("AspNetForumsSettings", "urlShowUserProfile", string.Empty).Replace("^", "&");
             }
         }
 
@@ -680,8 +668,7 @@ namespace AspNetForums.Components {
         /// </summary>
         static public String UrlHome {
             get {
-                NameValueCollection configSettings = (NameValueCollection) ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                return configSettings["urlHome"].Replace("^", "&");
+                return SafeConfigUrl("AspNetForumsSettings", "urlHome", string.Empty).Replace("^", "&");
             }
         }
 
@@ -690,8 +677,7 @@ namespace AspNetForums.Components {
         /// </summary>
         static public String UrlMyForums {
             get {
-                NameValueCollection configSettings = (NameValueCollection) ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                return configSettings["urlMyForums"].Replace("^", "&");
+                return SafeConfigUrl("AspNetForumsSettings", "urlMyForums", string.Empty).Replace("^", "&");
             }
         }
 
@@ -700,8 +686,7 @@ namespace AspNetForums.Components {
         /// </summary>
         static public String UrlChangePassword {
             get {
-                NameValueCollection configSettings = (NameValueCollection) ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                return configSettings["urlChangePassword"].Replace("^", "&");
+                return SafeConfigUrl("AspNetForumsSettings", "urlChangePassword", string.Empty).Replace("^", "&");
             }
         }
 
@@ -710,8 +695,7 @@ namespace AspNetForums.Components {
         /// </summary>
         static public String UrlForgotPassword {
             get {
-                NameValueCollection configSettings = (NameValueCollection) ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                return configSettings["urlForgotPassword"].Replace("^", "&");
+                return SafeConfigUrl("AspNetForumsSettings", "urlForgotPassword", string.Empty).Replace("^", "&");
             }
         }
 
@@ -720,8 +704,26 @@ namespace AspNetForums.Components {
         /// </summary>
         static public String UrlSearchForPostsByUser {
             get {
-                NameValueCollection configSettings = (NameValueCollection) ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                return configSettings["urlSearchForUser"].Replace("^", "&");
+                return SafeConfigUrl("AspNetForumsSettings", "urlSearchForPostsByUser", string.Empty).Replace("^", "&");
+            }
+        }
+
+        /// <summary>
+        /// Returns the Url to search for all posts by a given user
+        /// </summary>
+        static public String UrlModerationHistory {
+            get {
+                return SafeConfigUrl("AspNetForumsSettings", "urlModerationHistory", string.Empty).Replace("^", "&");
+            }
+        }
+        
+
+        /// <summary>
+        /// Returns the Url to search for all posts by a given user
+        /// </summary>
+        static public String UrlQuickSearch {
+            get {
+                return SafeConfigUrl("AspNetForumsSettings", "urlQuickSearch", string.Empty).Replace("^", "&");
             }
         }
 
@@ -730,20 +732,16 @@ namespace AspNetForums.Components {
         /// </summary>
         static public String UrlShowAllUsers {
             get {
-                NameValueCollection configSettings = (NameValueCollection) ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                return configSettings["urlShowAllUsers"];
+                return SafeConfigUrl("AspNetForumsSettings", "urlShowAllUsers", string.Empty).Replace("^", "&");
             }
         }
-
         
-		
         /// <summary>
         /// Returns the Url to edit an existing post from the post moderation page
         /// </summary>
         static public String UrlEditPost {
             get {
-                NameValueCollection configSettings = (NameValueCollection) ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                return configSettings["urlEditPost"].Replace("^", "&");
+                return SafeConfigUrl("AspNetForumsSettings", "urlEditPost", string.Empty).Replace("^", "&");
             }
         }
 
@@ -752,8 +750,7 @@ namespace AspNetForums.Components {
         /// </summary>
         static public String UrlUserEditPost {
             get {
-                NameValueCollection configSettings = (NameValueCollection) ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                return configSettings["urlUserEditPost"].Replace("^", "&");
+                return SafeConfigUrl("AspNetForumsSettings", "urlUserEditPost", string.Empty).Replace("^", "&");
             }
         }
 
@@ -762,8 +759,7 @@ namespace AspNetForums.Components {
         /// </summary>
         static public String UrlDeletePost {
             get {
-                NameValueCollection configSettings = (NameValueCollection) ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                return configSettings["urlDeletePost"].Replace("^", "&");
+                return SafeConfigUrl("AspNetForumsSettings", "urlDeletePost", string.Empty).Replace("^", "&");
             }
         }
 
@@ -772,29 +768,25 @@ namespace AspNetForums.Components {
         /// </summary>
         static public String UrlMovePost {
             get {
-                NameValueCollection configSettings = (NameValueCollection) ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                return configSettings["urlMovePost"].Replace("^", "&");
+                return SafeConfigUrl("AspNetForumsSettings", "urlMovePost", string.Empty).Replace("^", "&");
             }
         }
 
         static public String UrlModerateForumPosts {
             get {
-                NameValueCollection configSettings = (NameValueCollection) ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                return configSettings["urlModerateForumPosts"].Replace("^", "&");
+                return SafeConfigUrl("AspNetForumsSettings", "urlModerateForumPosts", string.Empty).Replace("^", "&");
             }
         }
 
         static public String UrlModerateThread {
             get {
-                NameValueCollection configSettings = (NameValueCollection) ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                return configSettings["urlModerateThread"].Replace("^", "&");
+                return SafeConfigUrl("AspNetForumsSettings", "urlModerateThread", string.Empty).Replace("^", "&");
             }
         }
 
         static public String UrlManageForumPosts {
             get {
-                NameValueCollection configSettings = (NameValueCollection) ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                return configSettings["urlManageForumPosts"].Replace("^", "&");
+                return SafeConfigUrl("AspNetForumsSettings", "urlManageForumPosts", string.Empty).Replace("^", "&");
             }
         }
 
@@ -803,8 +795,7 @@ namespace AspNetForums.Components {
         /// </summary>
         static public String UrlEditPostFromAdmin {
             get {
-                NameValueCollection configSettings = (NameValueCollection) ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                return configSettings["urlEditExistingPostFromAdmin"].Replace("^", "&");
+                return SafeConfigUrl("AspNetForumsSettings", "urlEditExistingPostFromAdmin", string.Empty).Replace("^", "&");
             }
         }
 
@@ -813,8 +804,7 @@ namespace AspNetForums.Components {
         /// </summary>
         static public String UrlLogin {
             get {
-                NameValueCollection configSettings = (NameValueCollection) ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                return configSettings["urlLogin"];
+                return SafeConfigUrl("AspNetForumsSettings", "urlLogin", string.Empty).Replace("^", "&");
             }
         }
 
@@ -823,8 +813,7 @@ namespace AspNetForums.Components {
         /// </summary>
         static public String UrlLogout {
             get {
-                NameValueCollection configSettings = (NameValueCollection) ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                return configSettings["urlLogout"];
+                return SafeConfigUrl("AspNetForumsSettings", "urlLogout", string.Empty).Replace("^", "&");
             }
         }
 
@@ -833,8 +822,7 @@ namespace AspNetForums.Components {
         /// </summary>
         static public String UrlShowForum {
             get {
-                NameValueCollection configSettings = (NameValueCollection) ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                return configSettings["urlShowForum"].Replace("^", "&");
+                return SafeConfigUrl("AspNetForumsSettings", "urlShowForum", string.Empty).Replace("^", "&");
             }
         }
 
@@ -844,8 +832,7 @@ namespace AspNetForums.Components {
         /// </summary>
         static public String UrlShowForumGroup {
             get {
-                NameValueCollection configSettings = (NameValueCollection) ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                return configSettings["urlShowForumGroup"].Replace("^", "&");
+                return SafeConfigUrl("AspNetForumsSettings", "urlShowForumGroup", string.Empty).Replace("^", "&");
             }
         }
 
@@ -853,8 +840,7 @@ namespace AspNetForums.Components {
         /// </summary>
         static public String UrlShowPost {
             get {
-                NameValueCollection configSettings = (NameValueCollection) ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                return configSettings["urlShowPost"].Replace("^", "&");
+                return SafeConfigUrl("AspNetForumsSettings", "urlShowPost", string.Empty).Replace("^", "&");
             }
         }
 
@@ -863,10 +849,8 @@ namespace AspNetForums.Components {
         /// </summary>
         static public String UrlModeration {
             get {
-                NameValueCollection configSettings = (NameValueCollection) ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                return configSettings["urlModeration"].Replace("^", "&");
+                return SafeConfigUrl("AspNetForumsSettings", "urlModeration", string.Empty).Replace("^", "&");
             }
-
         }
 
         /// <summary>
@@ -877,8 +861,7 @@ namespace AspNetForums.Components {
         /// </summary>
         static public String UrlMessage {
             get {
-                NameValueCollection configSettings = (NameValueCollection) ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                return configSettings["urlMessage"].Replace("^", "&");
+                return SafeConfigUrl("AspNetForumsSettings", "urlMessage", string.Empty).Replace("^", "&");
             }
         }
 
@@ -887,8 +870,7 @@ namespace AspNetForums.Components {
         /// </summary>
         static public String UrlReplyToPost {
             get {
-                NameValueCollection configSettings = (NameValueCollection) ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                return configSettings["urlReplyToPost"].Replace("^", "&");
+                return SafeConfigUrl("AspNetForumsSettings", "urlReplyToPost", string.Empty).Replace("^", "&");
             }
         }
 
@@ -897,8 +879,7 @@ namespace AspNetForums.Components {
         /// </summary>
         static public String UrlAddNewPost {
             get {
-                NameValueCollection configSettings = (NameValueCollection) ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                return configSettings["urlAddNewPost"].Replace("^", "&");
+                return SafeConfigUrl("AspNetForumsSettings", "urlAddNewPost", string.Empty).Replace("^", "&");
             }
         }
 
@@ -907,8 +888,7 @@ namespace AspNetForums.Components {
         /// </summary>
         static public String UrlEditForum {
             get {
-                NameValueCollection configSettings = (NameValueCollection) ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                return configSettings["urlEditForum"].Replace("^", "&");
+                return SafeConfigUrl("AspNetForumsSettings", "urlEditForum", string.Empty).Replace("^", "&");
             }
         }
 
@@ -917,8 +897,7 @@ namespace AspNetForums.Components {
         /// </summary>
         static public String UrlCreateForum {
             get {
-                NameValueCollection configSettings = (NameValueCollection) ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                return configSettings["urlCreateForum"].Replace("^", "&");
+                return SafeConfigUrl("AspNetForumsSettings", "urlCreateForum", string.Empty).Replace("^", "&");
             }
         }
 
@@ -927,8 +906,7 @@ namespace AspNetForums.Components {
         /// </summary>
         static public String UrlShowForumPostsForAdmin {
             get {
-                NameValueCollection configSettings = (NameValueCollection) ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                return configSettings["urlShowForumPostsForAdmin"].Replace("^", "&");
+                return SafeConfigUrl("AspNetForumsSettings", "urlShowForumPostsForAdmin", string.Empty).Replace("^", "&");
             }
         }
 
@@ -937,8 +915,7 @@ namespace AspNetForums.Components {
         /// </summary>
         static public String UrlAdmin {
             get {
-                NameValueCollection configSettings = (NameValueCollection) ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                return configSettings["urlAdmin"].Replace("^", "&");
+                return SafeConfigUrl("AspNetForumsSettings", "urlAdmin", string.Empty).Replace("^", "&");
             }
         }
 
@@ -947,8 +924,18 @@ namespace AspNetForums.Components {
         /// </summary>
         static public String UrlAdminEditUser {
             get {
-                NameValueCollection configSettings = (NameValueCollection) ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                return configSettings["urlAdminEditUser"].Replace("^", "&");
+                return SafeConfigUrl("AspNetForumsSettings", "urlAdminEditUser", string.Empty).Replace("^", "&");
+            }
+        }
+
+        /// <summary>
+        /// The Url to use for Admins to remove roles
+        /// </summary>
+        static public String UrlAdminRemoveRole
+        {
+            get 
+            {
+                return SafeConfigUrl("AspNetForumsSettings", "urlAdminRemoveRole", string.Empty).Replace("^", "&");
             }
         }
 
@@ -957,8 +944,7 @@ namespace AspNetForums.Components {
         /// </summary>
         static public String SiteName {
             get {
-                NameValueCollection configSettings = (NameValueCollection) ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                return configSettings["siteName"];
+                return SafeConfigString("AspNetForumsSettings", "siteName", string.Empty);
             }
         }
 
@@ -971,7 +957,7 @@ namespace AspNetForums.Components {
                 if (HttpContext.Current.Cache["pathToTransformationFile"] == null) {
                     string path;
                     NameValueCollection configSettings = (NameValueCollection) ConfigurationSettings.GetConfig("AspNetForumsSettings");
-                    path = configSettings["pathToTransformationFile"];
+                    path = Globals.ApplicationVRoot + configSettings["pathToTransformationFile"];
 
                     if (path.Substring(0,1) == "/")
                         // using virtual path, must convert to physical path
@@ -993,29 +979,61 @@ namespace AspNetForums.Components {
         /// <param name="length">The maximum length of the temporary password to create.</param>
         /// <returns>A temporary password less than or equal to the length specified.</returns>
         public static String CreateTemporaryPassword(int length) {
-            // begin by creating a random password
-            // start off by getting a temp filename
-            String strTempPassword = Path.GetFileNameWithoutExtension(Path.GetTempFileName()) + DateTime.Now.Millisecond.ToString();
-			
-            // jumble up the password
-            Random rnd = new Random();
-			
-            const int RandomLoops = 3;
-            int iRandNumber = 0;
-            for (int iLoop=0; iLoop < RandomLoops; iLoop++) {
-                iRandNumber = rnd.Next(strTempPassword.Length-3);				
-                if (iLoop % 2 == 0)
-                    strTempPassword += strTempPassword.Substring(iRandNumber, rnd.Next(iRandNumber, strTempPassword.Length-1) -iRandNumber);
-                else
-                    strTempPassword = strTempPassword.Substring(iRandNumber, rnd.Next(iRandNumber, strTempPassword.Length-1) - iRandNumber) + strTempPassword;
+            string strTempPassword = Guid.NewGuid().ToString("N");
+            for(int i = 0; i < (length / 32); i++) {
+                strTempPassword += Guid.NewGuid().ToString("N");
             }
-			
-            // make sure the password is only 10 characters long, at most
-            if (strTempPassword.Length > length)
-                strTempPassword = strTempPassword.Substring(0, length);
+            return strTempPassword.Substring(0, length);
+        }
 
-            return strTempPassword;
+        private static string SafeConfigUrl(string configSection, string configKey, string defaultValue) {
+            NameValueCollection configSettings = ConfigurationSettings.GetConfig(configSection) as NameValueCollection;
+            if ( configSettings != null ) {
+                string configValue = configSettings[configKey] as string;
+                if ( configValue != null ) {
+                    return Globals.ApplicationVRoot + configValue;
+                }
+            }
+
+            return defaultValue;
+        }
+
+        private static string SafeConfigString(string configSection, string configKey, string defaultValue) {
+            NameValueCollection configSettings = ConfigurationSettings.GetConfig(configSection) as NameValueCollection;
+            if ( configSettings != null ) {
+                string configValue = configSettings[configKey] as string;
+                if ( configValue != null ) {
+                    return configValue;
+                }
+            }
+
+            return defaultValue;
+        }
+
+        private static int SafeConfigNumber(string configSection, string configKey, int defaultValue)
+        {
+            NameValueCollection configSettings = ConfigurationSettings.GetConfig(configSection) as NameValueCollection;
+            if ( configSettings != null ) {
+                try {
+                    int configValue = Int32.Parse(configSettings[configKey]);
+                    return configValue;
+                } catch {}
+            }
+
+            return defaultValue;
+        }
+
+        private static bool SafeConfigBoolean(string configSection, string configKey, bool defaultValue)
+        {
+            NameValueCollection configSettings = ConfigurationSettings.GetConfig(configSection) as NameValueCollection;
+            if ( configSettings != null ) {
+                try {
+                    bool configValue = bool.Parse(configSettings[configKey]);
+                    return configValue;
+                } catch {}
+            }
+
+            return defaultValue;
         }
     }
-
 }

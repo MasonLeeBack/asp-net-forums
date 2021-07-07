@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Specialized;
 using System.Web;
 using System.Web.UI;
+using System.Web.UI.HtmlControls;
 using System.Web.UI.WebControls;
 using AspNetForums;
 using AspNetForums.Components;
@@ -11,23 +12,18 @@ using System.ComponentModel;
 using System.IO;
 
 namespace AspNetForums.Controls {
-
-    /// <summary>
-    /// This Web control displays the posts for a particular forum.  The posts are displayed in
-    /// a format either specifically indicated by the programmer utilizing this Web control or by
-    /// the Web visitor's Forum Display settings.  The posts shown are the posts for the forum that
-    /// fall within a certain date range, which can be specified via the Forum Administration Web page.
-    /// </summary>
-    /// <remarks>When using this control you must set the ForumID property to the forum's posts you
-    /// wish to display.  Failure to set this property will result in an Exception.</remarks>
-    [
-    ParseChildren(true)
-    ]
-    public class WhereAmI : WebControl, INamingContainer {
-
-        bool showHome = false;
-        bool enableLinks = true;
-        const string separator = " > ";
+    
+    [ParseChildren(true)]
+    public class WhereAmI : SkinnedForumWebControl {
+        private const string skinFilename = "Skin-WhereAmI.ascx";
+        private const bool dynamicMenu = false;
+		
+        private bool showHome = false;
+        private bool enableLinks = true;
+        
+        private ForumGroup forumGroup = null;
+        private Forum forum = null;
+        private Post post = null;
 
         // *********************************************************************
         //  WhereAmI
@@ -36,309 +32,293 @@ namespace AspNetForums.Controls {
         /// Constructor
         /// </summary>
         /// 
-        // ********************************************************************/
-        public WhereAmI() {
-
-            // If we have an instance of context, let's attempt to
-            // get the ForumID so we can save the user from writing
-            // the code
-            if (null != Context) {
-
-                // Attempt to get the ForumID
-                if (null != Context.Request.QueryString["ForumID"])
-                    this.ForumID = Convert.ToInt32(Context.Request.QueryString["ForumID"]);
-                else if (null != Context.Request.Form["ForumId"])
-                    this.ForumID = Convert.ToInt32(Context.Request.Form["ForumId"]);
-
-                // Attempt to get the ForumGroupID
-                if (null != Context.Request.QueryString["ForumGroupID"])
-                    this.ForumGroupID = Convert.ToInt32(Context.Request.QueryString["ForumGroupID"]);
-                else if (null != Context.Request.Form["ForumGroupID"])
-                    this.ForumGroupID = Convert.ToInt32(Context.Request.Form["ForumGroupID"]);
-
-                // Attempt to get the PostID
-                if (null != Context.Request.QueryString["PostID"]) {
-                    string postID = Context.Request.QueryString["PostID"];
-
-                    // Contains a #
-                    if (postID.IndexOf("#") > 0)
-                        postID = postID.Substring(0, postID.IndexOf("#"));
-
-                    this.PostID = Convert.ToInt32(postID);
-                } else if (null != Context.Request.Form["PostID"]) {
-                    this.PostID = Convert.ToInt32(Context.Request.Form["PostID"]);
-                }
-
+        // ***********************************************************************/
+        public WhereAmI() : base() {
+            // Set-up our skin
+            if (SkinFilename == null ) {
+                SkinFilename = skinFilename;
             }
 
+            // If the browser isn't IE 6+ we don't enable dynamic menus
+            if ((HttpContext.Current.Request.Browser.Browser == "IE") && (HttpContext.Current.Request.Browser.MajorVersion >= 6))
+                DynamicMenu = true;
         }
-
+			
         // *********************************************************************
-        //  CreateChildControls
+        //  Initializeskin
         //
         /// <summary>
-        /// This event handler adds the children controls and is resonsible
-        /// for determining the template type used for the control.
+        /// This method initializes the control with the named skin.
         /// </summary>
+        /// <param name="control">Instance of the user control to populate</param>
         /// 
-        // ********************************************************************/ 
-        protected override void CreateChildControls() {
-            PlaceHolder navigation;
-            HyperLink link;
-            Forum forum = null;
-            ForumGroup forumGroup = null;
-            Post post = null;
-            bool inPost = false;
-            bool inForum = false;
-            bool inForumGroup = false;
+        // ***********************************************************************/
+        protected override void InitializeSkin(Control skin) {
+            // Get the navigation links
+            HyperLink linkHome = skin.FindControl("LinkHome") as HyperLink;
+            HyperLink linkForumGroup = skin.FindControl("LinkForumGroup") as HyperLink;
+            HyperLink linkForum = skin.FindControl("LinkForum") as HyperLink;
+            HyperLink linkPost = skin.FindControl("LinkPost") as HyperLink;
 
-            // Are we in a post or forum or what?
-            if (PostID > -1) {
-                try {
-                    post = Posts.GetPost(PostID, Context.User.Identity.Name);
-                } catch (Components.PostNotFoundException postNotFound) {
-                    HttpContext.Current.Response.Redirect(Globals.UrlMessage + Convert.ToInt32(Messages.PostDoesNotExist));
-                    HttpContext.Current.Response.End();
+            // Get the separators
+            Control forumGroupSep = skin.FindControl("ForumGroupSeparator") as Control;
+            if ( forumGroupSep != null ) {
+                forumGroupSep.Visible = false;
+            }
+            Control forumSep = skin.FindControl("ForumSeparator") as Control;
+            if ( forumSep != null ) {
+                forumSep.Visible = false;
+            }
+            Control postSep = skin.FindControl("PostSeparator") as Control;
+            if ( postSep != null ) {
+                postSep.Visible = false;
+            }
+			
+            // Get the Menu Control areas
+            HtmlControl forumGroupMenu = skin.FindControl("ForumGroupMenu") as HtmlControl;
+            HtmlControl forumMenu = skin.FindControl("ForumMenu") as HtmlControl;
+            HtmlControl postMenu = skin.FindControl("PostMenu") as HtmlControl;
+            HtmlGenericControl menuScript = skin.FindControl("MenuScript") as HtmlGenericControl;
+			
+            if ( showHome && linkHome != null ) {
+                linkHome.Visible = true;
+                if ( enableLinks )
+                    linkHome.NavigateUrl = UrlHome;
+                linkHome.Text = RootLabel;
+            }
+            else {
+                linkHome.Visible = false;
+            }
+			
+            if ( ForumGroup != null && linkForumGroup != null ) {
+                if ( showHome && linkHome != null && forumGroupSep != null ) {
+                    forumGroupSep.Visible = true;
                 }
-                inPost = true;
-            } else if (ForumID > -1) {
-                forum = Forums.GetForumInfo(ForumID);
-                inForum = true;
-            } else if (ForumGroupID > -1) {
-                try {
-                    forumGroup = ForumGroups.GetForumGroup(ForumGroupID);
-                } catch (Components.ForumGroupNotFoundException forumGroupNotFound) {
-                    HttpContext.Current.Response.Redirect(Globals.UrlMessage + Convert.ToInt32(Messages.UnknownForum));
-                    HttpContext.Current.Response.End();
-                }
-                inForumGroup = true;
-            }
 
-            // This is the label we'll use to contain our controls
-            navigation = new PlaceHolder();
-
-            if (ShowHome) {
-                // Always add the site name as the base
-                link = new HyperLink();
-                link.CssClass = "linkSmallBold";
-                link.Text = Globals.SiteName;
-                link.NavigateUrl = Globals.UrlHome;
-                navigation.Controls.Add(link);
-
-                // Add separator
-                navigation.Controls.Add(Separator());
-            }
-
-            // Are we in a forum group?
-            if (inForumGroup) {
-                RenderForumGroupName(navigation, forumGroup);
-            }
-
-            // Are we in a forum?
-            if (inForum) {
-                RenderForumName(navigation, forum);
-            }
-
-            // Are we in a post?
-            if (inPost) {
-                RenderPostName(navigation, post);
-            }
-
-            Controls.Add(navigation);
-            
-        }
-
-        // *********************************************************************
-        //  RenderSeparator
-        //
-        /// <summary>
-        /// Creates a separator between menu item
-        /// </summary>
-        /// 
-        // ********************************************************************/ 
-        private Label Separator() {
-            Label menuSeparator = new Label();
-
-            // Add separator
-            menuSeparator.CssClass = "normalTextSmallBold";
-            menuSeparator.Text = separator;
-
-            return menuSeparator;
-
-        }
-
-
-        // *********************************************************************
-        //  RenderPostName
-        //
-        /// <summary>
-        /// Creates a hyperlink for navigation to the current post
-        /// </summary>
-        /// 
-        // ********************************************************************/ 
-        private void RenderPostName(Control control, Post post) {
-            ForumGroup forumGroup;
-            HyperLink link;
-
-            // Get the forum group details
-            forumGroup = ForumGroups.GetForumGroupByForumID(post.ForumID);
-
-            // Add forum group name
-            link = new HyperLink();
-            link.CssClass = "linkSmallBold";
-            link.Text = forumGroup.Name;
-            if (EnableLinks)
-                link.NavigateUrl = Globals.UrlShowForumGroup + forumGroup.ForumGroupID;
-            control.Controls.Add(link);
-
-            // Add separator
-            control.Controls.Add(Separator());
-
-            // Add forum name
-            link = new HyperLink();
-            link.CssClass = "linkSmallBold";
-            link.Text = post.ForumName;
-            if (EnableLinks)
-                link.NavigateUrl = Globals.UrlShowForum + post.ForumID;
-            control.Controls.Add(link);
-
-            // Add separator
-            control.Controls.Add(Separator());
-
-            // Add post name
-            link = new HyperLink();
-            link.CssClass = "linkSmallBold";
-            link.Text = post.Subject;
-            if (post.PostID != post.ThreadID) {
-                if (EnableLinks) {
-                    link.NavigateUrl = Globals.UrlShowPost + post.ThreadID + "#" + post.PostID;
-                }
-            } else {
-                if (EnableLinks) {
-                    link.NavigateUrl = Globals.UrlShowPost + post.ThreadID;
+                linkForumGroup.Visible = true;
+                if ( enableLinks )
+                    linkForumGroup.NavigateUrl = UrlShowForumGroup + ForumGroup.ForumGroupID;
+                linkForumGroup.Text = ForumGroup.Name;
+				
+                if ( forumGroupMenu != null && DynamicMenu ) {
+                    forumGroupMenu.Attributes["onmouseover"] = "menuOver('" + this.UniqueID + ":groupMenu');";
+                    forumGroupMenu.Attributes["onmouseleave"] = "menuSourceLeave('" + this.UniqueID + ":groupMenu');";
+                    RenderGroupsMenu();
                 }
             }
+            else {
+                linkForumGroup.Visible = false;
+            }
+			
+            if ( Forum != null && linkForum != null ) {
+                if ( linkForumGroup != null && forumSep != null ) {
+                    forumSep.Visible = true;
+                }
 
-            control.Controls.Add(link);
+                linkForum.Visible = true;
+                if ( enableLinks )
+                    linkForum.NavigateUrl = UrlShowForum + Forum.ForumID;
+                linkForum.Text = Forum.Name;
+
+                if ( forumMenu != null && DynamicMenu ) {
+                    forumMenu.Attributes["onmouseover"] = "menuOver('" + this.UniqueID + ":forumMenu');";
+                    forumMenu.Attributes["onmouseleave"] = "menuSourceLeave('" + this.UniqueID + ":forumMenu');";
+                    RenderForumsMenu();
+                }
+            }
+            else {
+                linkForum.Visible = false;
+            }
+			
+            if ( Post != null && linkPost != null ) {
+                if ( linkForum != null && postSep != null ) {
+                    postSep.Visible = true;
+                }
+                
+                linkPost.Visible = true;
+                if ( enableLinks )
+                    linkPost.NavigateUrl = UrlShowPost + Post.ThreadID;
+                linkPost.Text = Post.Subject;
+
+                if ( postMenu != null && DynamicMenu ) {
+                    postMenu.Attributes["onmouseover"] = "menuOver('" + this.UniqueID + ":postMenu');";
+                    postMenu.Attributes["onmouseleave"] = "menuSourceLeave('" + this.UniqueID + ":postMenu');";
+                    RenderPostsMenu();
+                }
+            }
+            else {
+                linkPost.Visible = false;
+            }
+
+            if ( menuScript != null ) {
+                Page.RegisterClientScriptBlock("MenuScript", menuScript.InnerText);
+                menuScript.InnerText = string.Empty;
+            }
         }
-
-        // *********************************************************************
-        //  RenderForumName
-        //
-        /// <summary>
-        /// Creates a hyperlink for navigation to the current forum
-        /// </summary>
-        /// 
-        // ********************************************************************/ 
-        private void RenderForumName(Control control, Forum forum) {
-            ForumGroup forumGroup;
-            HyperLink link;
-
-            // Get the forum group details
-            forumGroup = ForumGroups.GetForumGroupByForumID(forum.ForumID);
-
-            // Add forum group name
-            link = new HyperLink();
-            link.CssClass = "linkSmallBold";
-            link.Text = forumGroup.Name;
-            if (EnableLinks)
-                link.NavigateUrl = Globals.UrlShowForumGroup + forumGroup.ForumGroupID;
-            control.Controls.Add(link);
-
-            // Add separator
-            control.Controls.Add(Separator());
-
-            link = new HyperLink();
-            link.CssClass = "linkSmallBold";
-            link.Text = forum.Name;
-            if (EnableLinks)
-                link.NavigateUrl = Globals.UrlShowForum + forum.ForumID;
-            control.Controls.Add(link);
+		
+        private void RenderGroupsMenu() {
+            ForumGroupCollection groups = ForumGroups.GetAllForumGroups(false, true);
+            string groupMenu = "<div class='popupMenu' style='position: absolute; display: none;' id='" + this.UniqueID + ":groupMenu'>";
+            groupMenu += "<div class='popupTitle'>Forum Groups</div>";
+            for(int i = 0; i < groups.Count; i++) {
+                groupMenu += "<div class='popupItem'> <a href='" + UrlShowForumGroup + ((ForumGroup) groups[i]).ForumGroupID + 
+                    "'>" + ((ForumGroup) groups[i]).Name + "</a> </div>";
+            }
+            groupMenu += "</div>";
+            Page.RegisterClientScriptBlock(this.UniqueID + ":groupMenu", groupMenu);
         }
-
-        // *********************************************************************
-        //  RenderForumGroupName
-        //
-        /// <summary>
-        /// Creates a hyperlink for navigation to the current forum group
-        /// </summary>
-        /// 
-        // ********************************************************************/ 
-        private void RenderForumGroupName(Control control, ForumGroup forumGroup) {
-            HyperLink link;
-
-            // Add forum group name
-            link = new HyperLink();
-            link.CssClass = "linkSmallBold";
-            link.Text = forumGroup.Name;
-            if (EnableLinks)
-                link.NavigateUrl = Globals.UrlShowForumGroup + forumGroup.ForumGroupID;
-            control.Controls.Add(link);
+		
+        private void RenderForumsMenu() {
+            ForumCollection forums = DataProvider.Instance().GetForumsByForumGroupId(Forum.ForumGroupId, Context.User.Identity.Name);
+            forums.Sort();
+            string forumMenu = "<div class='popupMenu' style='position: absolute; display: none;' id='" + this.UniqueID + ":forumMenu'>";
+            forumMenu += "<div class='popupTitle'>Forums</div>";
+            for(int i = 0; i < forums.Count; i++) {
+                forumMenu += "<div class='popupItem'> <a href='" + UrlShowForum + ((Forum) forums[i]).ForumID +
+                    "'>" + ((Forum) forums[i]).Name + "</a> </div>";
+            }
+            forumMenu += "</div>";
+            Page.RegisterClientScriptBlock(this.UniqueID + ":forumMenu", forumMenu);
         }
-
-        /// <summary>
-        /// Specifies the Forum's posts you want to view.
-        /// </summary>
-        [
-        Category("Required"),
-        Description("Specifies the forum whose posts should be displayed.")
-        ]
-        public int ForumID {
+		
+        private void RenderPostsMenu() {
+            ThreadCollection posts = Threads.GetAllThreads(Post.ForumID, 20, 0, DateTime.MinValue, Context.User.Identity.Name, false);
+            string postMenu = "<div class='popupMenu' style='position: absolute; display: none;' id='" + this.UniqueID + ":postMenu'>";
+            postMenu += "<div class='popupTitle'>Posts</div>";
+            for(int i = 0; i < posts.Count && i < 20; i++) {
+                postMenu += "<div class='popupItem'> <a href='" + UrlShowPost + ((Post) posts[i]).PostID +
+                    "'>" + ((Post) posts[i]).Subject + "</a> </div>";
+            }
+            postMenu += "</div>";
+            Page.RegisterClientScriptBlock(this.UniqueID + ":postMenu", postMenu);
+        }
+		
+        private ForumGroup ForumGroup {
             get {
-                // the forumID is stuffed in the ViewState so that
-                // it is persisted across postbacks.
-                if (ViewState["forumID"] == null)
-                    return -1;		// if it's not found in the ViewState, return the default value
+                if ( forumGroup == null ) {
+                    if ( ForumGroupID > -1 ) {
+                        forumGroup = ForumGroups.GetForumGroup(ForumGroupID);
+                    }
+                    else {
+                        if ( ForumID > -1 ) {
+                            forumGroup = ForumGroups.GetForumGroup(Forum.ForumGroupId);
+                        }
+                        else {
+                            if ( PostID > -1 ) {
+                                forumGroup = ForumGroups.GetForumGroupByForumID(Post.ForumID);
+                            }
+                        }
+                    }
+                }
+				
+                return forumGroup;
+            }
+        }
+		
+        private Forum Forum {
+            get {
+                if ( forum == null ) {
+                    if ( ForumID > -1 ) {
+                        forum = Forums.GetForumInfo(ForumID);
+                    }
+                    else {
+                        if ( PostID > -1 ) {
+                            forum = Forums.GetForumInfo(Post.ForumID);
+                        }
+                    }
+                }
+				
+                return forum;
+            }
+        }
+		
+        private Post Post {
+            get {
+                if ( post == null ) {
+                    if ( PostID > -1 ) {
+                        post = Posts.GetPost(PostID, Context.User.Identity.Name);
+                    }
+                }
+				
+                return post;
+            }
+        }
+
+        public string UrlHome {
+            get {
+                if (ViewState["urlHome"] == null)
+                    return Globals.UrlHome;
 					
-                return Convert.ToInt32(ViewState["forumID"].ToString());
+                return ViewState["urlHome"].ToString();
             }
             set {
                 // set the viewstate
-                ViewState["forumID"] = value;
+                ViewState["urlHome"] = value;
             }
         }
 
-        /// <summary>
-        /// Specifies the Forum's posts you want to view.
-        /// </summary>
-        [
-        Category("Required"),
-        Description("Specifies the forum whose posts should be displayed.")
-        ]
-        public int ForumGroupID {
+        public string RootLabel {
             get {
-                // the forumID is stuffed in the ViewState so that
-                // it is persisted across postbacks.
-                if (ViewState["forumGroupID"] == null)
-                    return -1;		// if it's not found in the ViewState, return the default value
+                if (ViewState["rootLabel"] == null)
+                    return Globals.SiteName;
 					
-                return Convert.ToInt32(ViewState["forumGroupID"].ToString());
+                return ViewState["rootLabel"].ToString();
             }
             set {
                 // set the viewstate
-                ViewState["forumGroupID"] = value;
+                ViewState["rootLabel"] = value;
             }
         }
 
-        /// <summary>
-        /// Specifies the Forum's posts you want to view.
-        /// </summary>
-        [
-        Category("Required"),
-        Description("Specifies the Post we're in.")
-        ]
-        public int PostID {
+        public string UrlShowForumGroup {
             get {
-                // the forumID is stuffed in the ViewState so that
-                // it is persisted across postbacks.
-                if (ViewState["postID"] == null)
-                    return -1;		// if it's not found in the ViewState, return the default value
+                if (ViewState["urlShowForumGroup"] == null)
+                    return Globals.UrlShowForumGroup;
 					
-                return Convert.ToInt32(ViewState["postID"].ToString());
+                return ViewState["urlShowForumGroup"].ToString();
             }
             set {
                 // set the viewstate
-                ViewState["postID"] = value;
+                ViewState["urlShowForumGroup"] = value;
+            }
+        }
+
+        public string UrlShowForum {
+            get {
+                if (ViewState["urlShowForum"] == null)
+                    return Globals.UrlShowForum;
+					
+                return ViewState["urlShowForum"].ToString();
+            }
+            set {
+                // set the viewstate
+                ViewState["urlShowForum"] = value;
+            }
+        }
+
+        public string UrlShowPost {
+            get {
+                if (ViewState["urlShowPost"] == null)
+                    return Globals.UrlShowPost;
+					
+                return ViewState["urlShowPost"].ToString();
+            }
+            set {
+                // set the viewstate
+                ViewState["urlShowPost"] = value;
+            }
+        }
+
+        public bool DynamicMenu {
+            get {
+                if (ViewState["dynamicMenu"] == null)
+                    return dynamicMenu;
+					
+                return bool.Parse(ViewState["dynamicMenu"].ToString());
+            }
+            set {
+                // set the viewstate
+                ViewState["dynamicMenu"] = value;
             }
         }
 
@@ -359,7 +339,7 @@ namespace AspNetForums.Controls {
         // EnableLinks
         //
         /// <summary>
-        /// Controls whether or not the root element for the home is shown
+        ///  Determines whether or not links are hook-ed up.
         /// </summary>
         //
         ****************************************************************/
@@ -367,6 +347,5 @@ namespace AspNetForums.Controls {
             get {return enableLinks; }
             set {enableLinks = value; }
         }
-
     }
 }

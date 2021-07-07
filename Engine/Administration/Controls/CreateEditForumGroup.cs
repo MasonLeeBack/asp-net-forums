@@ -103,13 +103,13 @@ namespace AspNetForums.Controls.Admin {
                 // Find the image buttons
                 upButton = (ImageButton) skin.FindControl("MoveUpButton");
                 if (null != upButton) {
-                    upButton.ImageUrl = Globals.ApplicationVRoot + "/skins/" + SkinName + "/images/up.gif";
+                    upButton.ImageUrl = Globals.ApplicationVRoot + "/Skins/" + SkinName + "/images/up.gif";
                     upButton.Click += new System.Web.UI.ImageClickEventHandler(MoveForumGroupUpInSortOrder_Click);
                 }
 
                 downButton = (ImageButton) skin.FindControl("MoveDownButton");
                 if (null != downButton) {
-                    downButton.ImageUrl = Globals.ApplicationVRoot + "/skins/" + SkinName + "/images/dn.gif";
+                    downButton.ImageUrl = Globals.ApplicationVRoot + "/Skins/" + SkinName + "/images/dn.gif";
                     downButton.Click += new System.Web.UI.ImageClickEventHandler(MoveForumGroupDownInSortOrder_Click);
                 }
             }
@@ -286,8 +286,7 @@ namespace AspNetForums.Controls.Admin {
                 if (Mode == CreateEditForumMode.CreateForum) {
                     ForumGroups.AddForumGroup(forumGroupName.Text);
                 }
-            } catch (Exception exception) {
-                exception = null;
+            } catch (Exception) {
                 validateForumGroupName.Text = "Forum group name already exists.";
                 validateForumGroupName.IsValid = false;
                 return;

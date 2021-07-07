@@ -20,10 +20,12 @@ namespace AspNetForums.Controls {
     /// Summary description for Summary.
     /// </summary>
     public abstract class SkinnedForumWebControl : WebControl, INamingContainer {
+
         User user = null;
-		int forumID = -1;
-		int postID = -1;
+        int forumID = -1;
+        int postID = -1;
         int threadID = -1;
+        int forumGroupID = -1;
         string skinFilename = null;
         string skinName = null;
         string returnURL = null;
@@ -46,9 +48,9 @@ namespace AspNetForums.Controls {
 
             // Set the siteStyle for the page
             if (user != null)
-                skinName = user.SiteStyle;
+                skinName = user.Skin;
             else
-                skinName = Globals.SiteStyle;
+                skinName = Globals.Skin;
 
             // If we have an instance of context, let's attempt to
             // get the ForumID so we can save the user from writing
@@ -56,6 +58,7 @@ namespace AspNetForums.Controls {
             if (null != Context) {
                 GetPostIDFromRequest();
                 GetForumIDFromRequest();
+                GetForumGroupIDFromRequest();
                 GetReturnURLFromRequest();
             }            
         }
@@ -81,7 +84,8 @@ namespace AspNetForums.Controls {
                 } else if (null != Context.Request.Form["PostId"]) {
                     PostID = Convert.ToInt32(Context.Request.Form["PostID"]);
                 }
-            } catch (Exception e) {
+            } 
+            catch {
                 HttpContext.Current.Response.Redirect(Globals.UrlMessage + Convert.ToInt32(Messages.PostDoesNotExist));
                 HttpContext.Current.Response.End();
             }
@@ -110,12 +114,42 @@ namespace AspNetForums.Controls {
                 } else if (null != Context.Request.Form["ForumId"]) {
                     ForumID = Convert.ToInt32(Context.Request.Form["ForumID"]);
                 }
-            } catch (Exception e) {
+            } 
+            catch {
                 HttpContext.Current.Response.Redirect(Globals.UrlMessage + Convert.ToInt32(Messages.UnknownForum));
                 HttpContext.Current.Response.End();
             }
         }
 
+
+        // *********************************************************************
+        //  GetForumGroupIDFromRequest
+        //
+        /// <summary>
+        /// Retrieves the ForumGroupID from the request querystring/post.
+        /// </summary>
+        // ***********************************************************************/
+        private void GetForumGroupIDFromRequest() {
+
+            // Attempt to get the forum id, throw if it is invalid
+            try {
+                if (null != Context.Request.QueryString["ForumGroupID"]) {
+                    string forumGroupID = Context.Request.QueryString["ForumGroupID"];
+
+                    // Contains a #
+                    if (forumGroupID.IndexOf("#") > 0)
+                        forumGroupID = forumGroupID.Substring(0, forumGroupID.IndexOf("#"));
+
+                    ForumGroupID = Convert.ToInt32(forumGroupID);
+                } else if (null != Context.Request.Form["ForumGroupId"]) {
+                    ForumGroupID = Convert.ToInt32(Context.Request.Form["ForumGroupID"]);
+                }
+            } 
+            catch {
+                HttpContext.Current.Response.Redirect(Globals.UrlMessage + Convert.ToInt32(Messages.UnknownForum));
+                HttpContext.Current.Response.End();
+            }
+        }
 
         // *********************************************************************
         //  GetReturnURLFromRequest
@@ -133,7 +167,8 @@ namespace AspNetForums.Controls {
                 } else if (null != Context.Request.Form["ReturnURL"]) {
                     ReturnURL = Context.Request.Form["ReturnURL"];
                 }
-            } catch (Exception e) {
+            } 
+            catch {
                 returnURL = null;
             }
         }
@@ -167,6 +202,7 @@ namespace AspNetForums.Controls {
         // ***********************************************************************/
         protected Control LoadSkin() {
             Control skin;
+            string skinPath = Globals.ApplicationVRoot + "/Skins/" + SkinName + "/Skins/" + SkinFilename;
 
             // Do we have a skin?
             if (SkinFilename == null)
@@ -174,16 +210,17 @@ namespace AspNetForums.Controls {
 
             // Attempt to load the control. If this fails, we're done
             try {
-                skin = Page.LoadControl(Globals.ApplicationVRoot + "/skins/" + SkinName + "/Skins/" + SkinFilename);
+                skin = Page.LoadControl(skinPath);
             }
-            catch (FileNotFoundException e) {
+            catch (FileNotFoundException) {
 
                 // Ok we couldn't find the skin, let's attempt to load the default skin instead
                 try {
-                    skin = Page.LoadControl(Globals.ApplicationVRoot + "/skins/default/Skins/" + SkinFilename);
-                } catch (FileNotFoundException e2) {
+                    skin = Page.LoadControl(Globals.ApplicationVRoot + "/Skins/default/Skins/" + SkinFilename);
+                } 
+                catch (FileNotFoundException) {
                     // Can't load a skin
-                    throw new Exception("The skin /skins/" + SkinName + "/Skins/" + SkinFilename + " was not found. Please ensure this file exists in your skins directory");
+                    throw new Exception("The skin: '" + skinPath + "' was not found. Please ensure this file exists in your skins directory");
                 }
             }
 
@@ -229,31 +266,49 @@ namespace AspNetForums.Controls {
             }
         }
 
-		// *********************************************************************
-		//  ForumID
-		//
-		/// <summary>
+        // *********************************************************************
+        //  ForumID
+        //
+        /// <summary>
         /// If available returns the forum id value read from the querystring.
         /// </summary>
-		/// 
-		// ********************************************************************/ 
-		public int ForumID  {
-			get  {
-				return forumID;
-			}
-			set  {
-				forumID = value;
-			}
-		}
+        /// 
+        // ********************************************************************/ 
+        public int ForumID  {
+            get  {
+                return forumID;
+            }
+            set  {
+                forumID = value;
+            }
+        }
 
-		// *********************************************************************
-		//  PostID
-		//
-		/// <summary>
-		/// If available returns the post id value read from the querystring.
-		/// </summary>
-		/// 
-		// ********************************************************************/ 
+        
+        // *********************************************************************
+        //  ForumGroupID
+        //
+        /// <summary>
+        /// If available returns the forum group id value read from the querystring.
+        /// </summary>
+        /// 
+        // ********************************************************************/ 
+        public int ForumGroupID  {
+            get  {
+                return forumGroupID;
+            }
+            set  {
+                forumGroupID = value;
+            }
+        }
+
+        // *********************************************************************
+        //  PostID
+        //
+        /// <summary>
+        /// If available returns the post id value read from the querystring.
+        /// </summary>
+        /// 
+        // ********************************************************************/ 
         public int PostID {
             get {
                 return postID;
@@ -314,5 +369,5 @@ namespace AspNetForums.Controls {
                 returnURL = value;
             }
         }
-        }
+    }
 }

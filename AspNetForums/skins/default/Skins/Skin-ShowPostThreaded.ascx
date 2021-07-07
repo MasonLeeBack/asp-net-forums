@@ -4,7 +4,7 @@
 <%@ Import Namespace="AspNetForums.Controls" %>
 <table cellPadding="0" width="100%">
   <tr>
-    <td align="left" colSpan="2"><ASPNETFORUMS:WHEREAMI id="Whereami1" runat="server" NAME="Whereami1"></ASPNETFORUMS:WHEREAMI></td>
+    <td align="left" colSpan="2"><aspnetforums:whereami id="Whereami1" runat="server" NAME="Whereami1"></aspnetforums:whereami></td>
   </tr>
   <tr>
     <td align="left" colSpan="2">&nbsp;
@@ -34,6 +34,6 @@
     </td>
   </tr>
   <tr>
-    <td align="left" colSpan="2"><ASPNETFORUMS:WHEREAMI ShowHome="true" id="Whereami2" runat="server" NAME="Whereami1"></ASPNETFORUMS:WHEREAMI></td>
+    <td align="left" colSpan="2"><aspnetforums:whereami ShowHome="true" id="Whereami2" runat="server" NAME="Whereami1"></aspnetforums:whereami></td>
   </tr>
 </table>

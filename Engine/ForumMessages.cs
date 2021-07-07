@@ -27,7 +27,7 @@ namespace AspNetForums {
         /// 
         // ********************************************************************/
         public static ForumMessage GetMessage(int messageId) {
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            IDataProviderBase dp = DataProvider.Instance();
 
             return dp.GetMessage(messageId);
         }
@@ -41,8 +41,8 @@ namespace AspNetForums {
         /// 
         // ********************************************************************/
         public static ForumMessageTemplateCollection GetMessageTemplateList() {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             return dp.GetMessageTemplateList();
         }
@@ -58,8 +58,8 @@ namespace AspNetForums {
         /// 
         // ********************************************************************/
         public static void UpdateMessageTemplate(ForumMessage message) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             dp.UpdateMessageTemplate(message);
         }

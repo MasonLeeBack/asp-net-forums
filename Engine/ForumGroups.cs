@@ -25,9 +25,16 @@ namespace AspNetForums {
         /// 
         // ********************************************************************/ 
         public static ForumGroup GetForumGroupByForumID(int forumID) {
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            
+            if (null == HttpContext.Current.Items["ForumGroupByForumID" + forumID]) {
+                // Create Instance of the IDataProviderBase
+                IDataProviderBase dp = DataProvider.Instance();
 
-            return dp.GetForumGroupByForumId(forumID);
+                HttpContext.Current.Items["ForumGroupByForumID" + forumID] = dp.GetForumGroupByForumId(forumID);
+            }
+
+            return (ForumGroup) HttpContext.Current.Items["ForumGroupByForumID" + forumID];
+            
         }
 
         // *********************************************************************
@@ -40,8 +47,8 @@ namespace AspNetForums {
         /// 
         // ********************************************************************/ 
         public static void AddForumGroup(string forumGroupName) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             dp.AddForumGroup(forumGroupName);
         }
@@ -82,7 +89,7 @@ namespace AspNetForums {
         /// 
         // ********************************************************************/ 
         public static void ChangeForumGroupSortOrder(int forumGroupID, bool moveUp) {
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            IDataProviderBase dp = DataProvider.Instance();
 
             dp.ChangeForumGroupSortOrder(forumGroupID, moveUp);
         }
@@ -98,16 +105,19 @@ namespace AspNetForums {
         /// 
         // ********************************************************************/ 
         public static ForumGroupCollection GetAllForumGroups(bool displayForumGroupsNotApproved, bool allowFromCache) {
-            string cacheKey = "ALlForumGroups-" + displayForumGroupsNotApproved + HttpContext.Current.User.Identity.Name;
+            string cacheKey = "AllForumGroups-" + displayForumGroupsNotApproved + HttpContext.Current.User.Identity.Name;
             ForumGroupCollection forums;
 
             // This doesn't change a whole lot so we'll cache values
             if ((HttpContext.Current.Cache[cacheKey] != null) && (allowFromCache)) {
                 forums = (ForumGroupCollection) HttpContext.Current.Cache[cacheKey];
             } else {
-                IWebForumsDataProviderBase dp = DataProvider.Instance();
+                IDataProviderBase dp = DataProvider.Instance();
 
                 forums = dp.GetAllForumGroups(displayForumGroupsNotApproved, HttpContext.Current.User.Identity.Name);
+
+                // Sort the forum groups
+                forums.Sort();
 
                 HttpContext.Current.Cache.Insert(cacheKey, forums, null, DateTime.Now.AddMinutes(5), TimeSpan.Zero);
 
@@ -134,8 +144,8 @@ namespace AspNetForums {
         /// <param name="forumGroupId">id of forum group to replace new name value with</param>
         // ********************************************************************/ 
         public static void UpdateForumGroup(string forumGroupName, int forumGroupId) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             dp.UpdateForumGroup(forumGroupName, forumGroupId);
         }

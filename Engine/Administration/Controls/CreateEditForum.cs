@@ -100,6 +100,10 @@ namespace AspNetForums.Controls.Admin {
             // Wire up the button click
             button = (Button) control.FindControl("CreateUpdate");
             button.Click += new System.EventHandler(CreateUpdateForum_Click);
+
+            // Initialize role based security
+            UpdateRoleControls(control);
+
             if (Mode == CreateEditForumMode.CreateForum)
                 button.Text = "Create New Forum";
             else
@@ -157,9 +161,9 @@ namespace AspNetForums.Controls.Admin {
 
             // Attempt to load the control. If this fails, we're done
             try {
-                form = Page.LoadControl(Globals.ApplicationVRoot + "/skins/" + Globals.Skin + "/Skins/Skin-CreateEditForums.ascx");
+                form = Page.LoadControl(Globals.ApplicationVRoot + "/Skins/" + Globals.Skin + "/Skins/Skin-CreateEditForums.ascx");
             }
-            catch (FileNotFoundException e) {
+            catch (FileNotFoundException) {
                 throw new Exception("The user control skins/Skins/Skin-CreateEditForums.ascx was not found. Please ensure this file exists in your skins directory");
             }
 
@@ -542,6 +546,114 @@ namespace AspNetForums.Controls.Admin {
         }
 
         // *********************************************************************
+        //  UpdateRoleControls
+        //
+        /// <summary>
+        /// Special helper method for update the role based security lists
+        /// whenever a user action occurs.  This could be the user being added
+        /// to a new security role, or the user being removed from a security
+        /// role.
+        /// </summary>
+        /// 
+        // ********************************************************************/
+        private void UpdateRoleControls(Control skin)
+        {
+            if ( Mode == CreateEditForumMode.EditForum )
+            {
+                // Show the role-based security information
+                Control roleBasedSecurity = skin.FindControl("RoleBasedSecurity");
+                if ( roleBasedSecurity != null )
+                {
+                    roleBasedSecurity.Visible = true;
+                }
+                else
+                {
+                    return;
+                }
+
+                // Perform role based security work
+                string[] userRoles = UserRoles.GetForumRoles(ForumID);
+                string[] roles = UserRoles.GetAllRoles();
+
+                DataGrid activeRoles = skin.FindControl("ActiveRoles") as DataGrid;
+                if ( activeRoles != null ) {
+					if ( userRoles.Length > 0 ) {
+						activeRoles.DataSource = userRoles;
+						activeRoles.DataBind();
+						activeRoles.ItemCommand += new DataGridCommandEventHandler(Roles_Command);
+						activeRoles.Visible = true;
+					}
+					else {
+						activeRoles.Visible = false;
+					}
+				}
+				
+				Label noActiveRoles = skin.FindControl("NoActiveRoles") as Label;
+				if ( noActiveRoles != null ) {
+					if ( userRoles.Length > 0 ) {
+						noActiveRoles.Visible = false;
+					}
+					else {
+						noActiveRoles.Visible = true;
+					}
+				}
+
+                DataGrid allRoles = skin.FindControl("AllRoles") as DataGrid;
+                if ( allRoles != null ) {
+					if ( roles.Length > 0 ) {
+						allRoles.DataSource = roles;
+						allRoles.DataBind();
+						allRoles.ItemCommand += new DataGridCommandEventHandler(Roles_Command);
+						allRoles.Visible = true;
+					}
+					else {
+						allRoles.Visible = false;
+					}
+				}
+
+				Label noAllRoles = skin.FindControl("NoAllRoles") as Label;
+				if ( noAllRoles != null ) {
+					if ( roles.Length > 0 ) {
+						noAllRoles.Visible = false;
+					}
+					else {
+						noAllRoles.Visible = true;
+					}
+				}
+            }
+        }
+        
+        // *********************************************************************
+        //  Roles_Command
+        //
+        /// <summary>
+        /// This event is raised whenever the administrator works with the role
+        /// based security model.  There isn't any pre-caching or confirmation
+        /// when working with role based security, and all changes to the database
+        /// occur immediately.
+        /// </summary>
+        /// 
+        // ********************************************************************/
+        private void Roles_Command(object sender, DataGridCommandEventArgs e)
+        {
+            int forumID = ForumID;
+            string action = e.CommandName;
+            string role = e.CommandArgument.ToString();
+
+            switch(action)
+            {
+                case "AddRole":
+                    UserRoles.AddForumToRole(forumID, role);
+                    UpdateRoleControls(((Control) sender).Parent);
+                    break;
+                case "RemoveRole":
+                    UserRoles.RemoveForumFromRole(forumID, role);
+                    UpdateRoleControls(((Control) sender).Parent);
+                    break;
+            }
+        }
+
+        // *********************************************************************
         //  CheckUserPermissions
         //
         /// <summary>
@@ -550,7 +662,8 @@ namespace AspNetForums.Controls.Admin {
         /// </summary>
         //
         // ********************************************************************/
-        public bool CheckUserPermissions {
+        public bool CheckUserPermissions 
+        {
             get {
                 if (ViewState["checkUserPerm"] == null) 
                     return true;

@@ -25,7 +25,7 @@ namespace AspNetForums.Controls {
         int forumGroupID = -1;
 		int postID = -1;
         int threadID = -1;
-        string siteStyle = null;
+        string skinName = null;
 
         // *********************************************************************
         //  ForumRepeaterControl
@@ -49,9 +49,9 @@ namespace AspNetForums.Controls {
 
             // Set the siteStyle for the page
             if (user != null)
-                siteStyle = user.SiteStyle;
+                skinName = user.Skin;
             else
-                siteStyle = Globals.SiteStyle;
+                skinName = Globals.Skin;
 
             // If we have an instance of context, let's attempt to
             // get the ForumID so we can save the user from writing
@@ -84,7 +84,9 @@ namespace AspNetForums.Controls {
                 } else if (null != Context.Request.Form["PostId"]) {
                     PostID = Convert.ToInt32(Context.Request.Form["PostID"]);
                 }
-            } catch (Exception e) {
+            } 
+            catch 
+            {
                 HttpContext.Current.Response.Redirect(Globals.UrlMessage + Convert.ToInt32(Messages.PostDoesNotExist));
                 HttpContext.Current.Response.End();
             }
@@ -107,7 +109,9 @@ namespace AspNetForums.Controls {
                 else if (null != Context.Request.Form["ForumID"])
                     ForumID = Convert.ToInt32(Context.Request.Form["ForumID"]);
 
-            } catch (Exception e) {
+            }
+            catch 
+            {
                 HttpContext.Current.Response.Redirect(Globals.UrlMessage + Convert.ToInt32(Messages.UnknownForum));
                 HttpContext.Current.Response.End();
             }
@@ -129,7 +133,9 @@ namespace AspNetForums.Controls {
                     ForumGroupID = Convert.ToInt32(Context.Request.QueryString["ForumGroupID"]);
                 else if (null != Context.Request.Form["ForumGroupID"])
                     ForumGroupID = Convert.ToInt32(Context.Request.Form["ForumGroupID"]);
-            } catch (Exception e) {
+            } 
+            catch 
+            {
                 HttpContext.Current.Response.Redirect(Globals.UrlMessage + Convert.ToInt32(Messages.UnknownForum));
                 HttpContext.Current.Response.End();
             }
@@ -218,19 +224,19 @@ namespace AspNetForums.Controls {
         }
 
         // *********************************************************************
-        //  SiteStyle
+        //  SkinName
         //
         /// <summary>
         /// Used to construct paths to images, etc. within controls.
         /// </summary>
         /// 
         // ********************************************************************/ 
-        protected string SiteStyle {
+        protected string SkinName {
             get {
-                return siteStyle;
+                return skinName;
             }
             set {
-                siteStyle = value;
+                skinName = value;
             }
         }
 

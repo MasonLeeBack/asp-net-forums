@@ -1,7 +1,7 @@
 <VisualStudioProject>
-    <CSHARP>
+    <CSHARP LastOpenVersion = "7.10.3077" >
         <Build>
-            <Settings ReferencePath = "" >
+            <Settings ReferencePath = "C:\Documents and Settings\jhill\My Documents\Download\Npgsql-0.6-bin\NpgsqlBinaries0.6\ms\;C:\Documents and Settings\jhill\My Documents\Download\Npgsql-0.5-releasebins\releasebins\build\ms\;J:\AspNetForums\" >
                 <Config
                     Name = "Debug"
                     EnableASPDebugging = "false"
@@ -72,7 +72,7 @@
             CopyProjectDestinationFolder = ""
             CopyProjectUncPath = ""
             CopyProjectOption = "0"
-            ProjectView = "ShowAllFiles"
+            ProjectView = "ProjectFiles"
             ProjectTrust = "0"
         />
     </CSHARP>

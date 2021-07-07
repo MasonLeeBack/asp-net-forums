@@ -122,7 +122,7 @@ namespace AspNetForums.Controls.Moderation {
             // Ensure we have a valid forum
             try {
                 forum = Forums.GetForumInfo(ForumID);
-            } catch (Components.ForumNotFoundException fnf) {
+            } catch (Components.ForumNotFoundException) {
                 Page.Response.Redirect(Globals.UrlMessage + Convert.ToInt32(Messages.UnknownForum));
                 Page.Response.End();
             }

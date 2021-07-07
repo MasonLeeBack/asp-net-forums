@@ -17,7 +17,6 @@
                 <!-- center column -->
                 <td id="CenterColumn" Width="95%" runat="server" class="CenterColumn">
                   <br>
-<%-- SkinFilename="Moderation/Skin-Navigation.ascx"  --%>
                   <AspNetForums:NavigationMenu id="NavigationMenu2" title="ASP.NET Discussion Forum" runat="server" Description="A free discussion system for ASP.NET" />
                   <AspNetForums:CreateEditPost Mode="EditPost" runat="server" />
                 </td>

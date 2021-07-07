@@ -60,10 +60,10 @@
         <tr>
           <td>
             <span class="normalTextSmaller">
-              3 most active users:<br> 
+              Top 10 most active users in past 24 hours:<br> 
               <asp:Repeater id="TopUsers" runat="server">
                 <ItemTemplate>
-                 &nbsp;<%# (i++).ToString() %>. <a href='<%# Globals.UrlUserProfile + DataBinder.Eval(Container.DataItem, "Username") %>'><%# DataBinder.Eval(Container.DataItem, "Username") %></a> (<%# DataBinder.Eval(Container.DataItem, "TotalPosts") %>)<br>
+                 &nbsp;<%# (i++).ToString() %>. <a href='<%# Globals.UrlUserProfile + DataBinder.Eval(Container.DataItem, "Username") %>'><%# DataBinder.Eval(Container.DataItem, "Username") %></a> (<%# ((int)DataBinder.Eval(Container.DataItem, "TotalPosts")).ToString("n0") %>)<br>
                 </ItemTemplate>
               </asp:Repeater>
             </span>

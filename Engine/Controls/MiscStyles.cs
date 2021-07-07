@@ -349,8 +349,7 @@ namespace AspNetForums.Controls {
         /// setting in Web.config.</remarks>
         public String UpArrowImageUrl {
             get {
-                if (ViewState["nextprevMessagesStyleUpArrowUrl"] == null) return Globals.ImagePath + _defaultUpArrow;
-                return (String) ViewState["nextprevMessagesStyleUpArrowUrl"];
+                return _defaultUpArrow;
             }
             set { ViewState["nextprevMessagesStyleUpArrowUrl"] = value; }
         }
@@ -363,7 +362,6 @@ namespace AspNetForums.Controls {
         /// setting in Web.config.</remarks>
         public String DownArrowImageUrl {
             get {
-                if (ViewState["nextprevMessagesStyleDownArrowUrl"] == null) return Globals.ImagePath + _defaultDownArrow;
                 return (String) ViewState["nextprevMessagesStyleDownArrowUrl"];
             }
             set { ViewState["nextprevMessagesStyleDownArrowUrl"] = value; }

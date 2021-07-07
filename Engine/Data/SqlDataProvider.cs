@@ -14,8 +14,187 @@ namespace AspNetForums.Data {
     /// <summary>
     /// Summary description for WebForumsDataProvider.
     /// </summary>
-    public class SqlDataProvider : IWebForumsDataProviderBase {
+    public class SqlDataProvider : IDataProviderBase {
 
+        /****************************************************************
+        // GetNextThreadID
+        //
+        /// <summary>
+        /// Gets the next threadid based on the postid
+        /// </summary>
+        //
+        ****************************************************************/
+        public ModerationQueueStatus GetQueueStatus(int forumID, string username) {
+            ModerationQueueStatus moderationQueue = new ModerationQueueStatus();
+
+            // Create Instance of Connection and Command Object
+            SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetUnmoderatedPostStatus", myConnection);
+            SqlDataReader reader;
+
+            // Mark the Command as a SPROC
+            myCommand.CommandType = CommandType.StoredProcedure;
+
+            // Add Parameters to SPROC
+            myCommand.Parameters.Add("@ForumID", SqlDbType.Int).Value = forumID;
+            myCommand.Parameters.Add("@Username", SqlDbType.NVarChar, 50).Value = username;
+
+            // Execute the command
+            myConnection.Open();
+
+            reader = myCommand.ExecuteReader();
+
+            while (reader.Read()) {
+                moderationQueue.AgeInMinutes = (int) reader["OldestPostAgeInMinutes"];
+                moderationQueue.Count = (int) reader["TotalPostsInModerationQueue"];
+            }
+
+            reader.Close();
+            myConnection.Close();
+
+            return moderationQueue;
+        }
+
+        /****************************************************************
+        // GetNextThreadID
+        //
+        /// <summary>
+        /// Gets the next threadid based on the postid
+        /// </summary>
+        //
+        ****************************************************************/
+        public int GetNextThreadID(int postID) {
+            // Create Instance of Connection and Command Object
+            SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetPrevNextThreadID", myConnection);
+            SqlDataReader reader;
+            int threadID = postID;
+
+            // Mark the Command as a SPROC
+            myCommand.CommandType = CommandType.StoredProcedure;
+
+            // Add Parameters to SPROC
+            myCommand.Parameters.Add("@PostID", SqlDbType.Int).Value = postID;
+            myCommand.Parameters.Add("@NextThread", SqlDbType.Bit).Value = 1;
+
+            // Execute the command
+            myConnection.Open();
+
+            reader = myCommand.ExecuteReader();
+
+            while (reader.Read())
+                threadID = (int) reader["ThreadID"];
+
+            reader.Close();
+            myConnection.Close();
+
+            return threadID;
+        }
+
+        /****************************************************************
+        // GetPrevThreadID
+        //
+        /// <summary>
+        /// Gets the prev threadid based on the postid
+        /// </summary>
+        //
+        ****************************************************************/
+        public int GetPrevThreadID(int postID) {
+            // Create Instance of Connection and Command Object
+            SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetPrevNextThreadID", myConnection);
+            SqlDataReader reader;
+            int threadID = postID;
+
+            // Mark the Command as a SPROC
+            myCommand.CommandType = CommandType.StoredProcedure;
+
+            // Add Parameters to SPROC
+            myCommand.Parameters.Add("@PostID", SqlDbType.Int).Value = postID;
+            myCommand.Parameters.Add("@NextThread", SqlDbType.Bit).Value = 0;
+
+            // Execute the command
+            myConnection.Open();
+
+            reader = myCommand.ExecuteReader();
+
+            while (reader.Read())
+                threadID = (int) reader["ThreadID"];
+
+            reader.Close();
+            myConnection.Close();
+
+            return threadID;
+        }
+
+        /****************************************************************
+        // Vote
+        //
+        /// <summary>
+        /// Votes for a poll
+        /// </summary>
+        //
+        ****************************************************************/
+        public void Vote(int postID, string selection) {
+            // Create Instance of Connection and Command Object
+            SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_Vote", myConnection);
+
+            // Mark the Command as a SPROC
+            myCommand.CommandType = CommandType.StoredProcedure;
+
+            // Add Parameters to SPROC
+            myCommand.Parameters.Add("@PostID", SqlDbType.Int).Value = postID;
+            myCommand.Parameters.Add("@Vote", SqlDbType.NVarChar, 2).Value = selection;
+
+            // Execute the command
+            myConnection.Open();
+            myCommand.ExecuteNonQuery();
+            myConnection.Close();
+        }
+        
+        /****************************************************************
+        // GetVoteResults
+        //
+        /// <summary>
+        /// Returns a collection of threads that the user has recently partipated in.
+        /// </summary>
+        //
+        ****************************************************************/
+        public VoteResultCollection GetVoteResults(int postID) {
+            VoteResult voteResult;
+            VoteResultCollection voteResults = new VoteResultCollection();
+
+            // Create Instance of Connection and Command Object
+            SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetVoteResults", myConnection);
+
+            // Mark the Command as a SPROC
+            myCommand.CommandType = CommandType.StoredProcedure;
+
+            // Add Parameters to SPROC
+            myCommand.Parameters.Add("@PostID", SqlDbType.Int).Value = postID;
+
+            // Execute the command
+            myConnection.Open();
+            SqlDataReader dr = myCommand.ExecuteReader();
+
+            
+            // Read the values
+            //
+            while (dr.Read()) {
+                voteResult = new VoteResult();
+                voteResult.Vote = (string) dr["Vote"];
+                voteResult.VoteCount = (int) dr["VoteCount"];
+
+                voteResults.Add(voteResult.Vote,voteResult);
+            }
+            
+            // Close the conneciton
+            myConnection.Close();
+
+            return voteResults;
+        }
 
         /****************************************************************
         // GetThreadsUserMostRecentlyParticipatedIn
@@ -28,7 +207,7 @@ namespace AspNetForums.Data {
         public ThreadCollection GetThreadsUserMostRecentlyParticipatedIn(string username) {
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_GetTopicsUserMostRecentlyParticipatedIn", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetTopicsUserMostRecentlyParticipatedIn", myConnection);
             ThreadCollection threads;
 
             // Mark the Command as a SPROC
@@ -66,7 +245,7 @@ namespace AspNetForums.Data {
         public ThreadCollection GetThreadsUserIsTracking(string username) {
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_GetTopicsUserIsTracking", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetTopicsUserIsTracking", myConnection);
             ThreadCollection threads;
 
             // Mark the Command as a SPROC
@@ -105,7 +284,7 @@ namespace AspNetForums.Data {
 
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_FindUsersByName", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_FindUsersByName", myConnection);
             SqlDataReader reader;
             UserCollection users = new UserCollection();
             User user;
@@ -130,6 +309,68 @@ namespace AspNetForums.Data {
             myConnection.Close();
 
             return users;
+        }
+
+        
+        
+        /****************************************************************
+        // GetTopNPopularPosts
+        //
+        /// <summary>
+        /// TODO
+        /// </summary>
+        //
+        ****************************************************************/
+        public PostCollection GetTopNPopularPosts(string username, int postCount, int days) {
+            return GetTopNPosts(username, postCount, days, "TotalViews");
+        }
+        
+        /****************************************************************
+        // GetTopNPopularPosts
+        //
+        /// <summary>
+        /// ToDO
+        /// </summary>
+        //
+        ****************************************************************/
+        public PostCollection GetTopNNewPosts(string username, int postCount) {
+            return GetTopNPosts(username, postCount, 0, "ThreadDate");
+        }
+        
+        /****************************************************************
+        // GetTopNPopularPosts
+        //
+        /// <summary>
+        /// TODO
+        /// </summary>
+        //
+        ****************************************************************/
+        private PostCollection GetTopNPosts(string username, int postCount, int days, string sort) {
+            PostCollection posts = new PostCollection();
+            SqlConnection myConnection;
+
+            using(myConnection = new SqlConnection(Globals.DatabaseConnectionString)) {
+                SqlCommand myCommand = new SqlCommand("dbo.forums_GetTopNPosts", myConnection);
+                myCommand.CommandType = CommandType.StoredProcedure;
+                myCommand.Parameters.Add("@UserName", SqlDbType.NVarChar, 50).Value = username;
+                myCommand.Parameters.Add("@SortType", SqlDbType.NVarChar, 50).Value = sort;
+                myCommand.Parameters.Add("@PostCount", SqlDbType.Int, 4).Value = postCount;
+                myCommand.Parameters.Add("@DaysToCount", SqlDbType.Int, 4).Value = days;
+                
+                myConnection.Open();
+                using(SqlDataReader dr = myCommand.ExecuteReader()) {
+                    Post post = null;
+                    
+                    while(dr.Read()) {
+                        post = PopulatePostFromSqlDataReader(dr);
+                        posts.Add(post);
+                    }
+                }
+            }
+
+            // Close the connection
+            myConnection.Close();
+            return posts;
         }
 
         /****************************************************************
@@ -261,7 +502,7 @@ namespace AspNetForums.Data {
         public ThreadCollection GetAllUnmoderatedThreads(int forumID, int pageSize, int pageIndex, string username) {
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_GetAllUnmoderatedTopicsPaged", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetAllUnmoderatedTopicsPaged", myConnection);
             ThreadCollection threads;
 
             // Mark the Command as a SPROC
@@ -314,7 +555,7 @@ namespace AspNetForums.Data {
             // return all of the forums and their total and daily posts
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_GetForumsForModerationByForumGroupId", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetForumsForModerationByForumGroupId", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
@@ -390,7 +631,7 @@ namespace AspNetForums.Data {
         public ForumGroupCollection GetForumGroupsForModeration(string username) {
             // Connect to the database
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_GetAllForumGroupsForModeration", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetAllForumGroupsForModeration", myConnection);
 
             myCommand.CommandType = CommandType.StoredProcedure;
 
@@ -424,7 +665,7 @@ namespace AspNetForums.Data {
         ****************************************************************/
         public void ToggleOptions(string username, bool hideReadThreads, ViewOptions viewOptions) {
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_ToggleOptions", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_ToggleOptions", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
@@ -457,7 +698,7 @@ namespace AspNetForums.Data {
         ****************************************************************/
         public void ChangeForumGroupSortOrder(int forumGroupID, bool moveUp) {
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_ChangeForumGroupSortOrder", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_ChangeForumGroupSortOrder", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
@@ -485,7 +726,7 @@ namespace AspNetForums.Data {
             // return all of the forums and their total and daily posts
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_UpdateMessageTemplateList", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_UpdateMessageTemplateList", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
@@ -516,7 +757,7 @@ namespace AspNetForums.Data {
             // return all of the forums and their total and daily posts
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_GetForumMessageTemplateList", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetForumMessageTemplateList", myConnection);
             SqlDataReader reader;
             ForumMessageTemplateCollection messages = new ForumMessageTemplateCollection();
             ForumMessage message;
@@ -557,7 +798,7 @@ namespace AspNetForums.Data {
             // return all of the forums and their total and daily posts
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_GetUsernameByEmail", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetUsernameByEmail", myConnection);
             SqlDataReader reader;
             string username = null;
 
@@ -593,7 +834,7 @@ namespace AspNetForums.Data {
             // return all of the forums and their total and daily posts
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_ChangeUserPassword", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_ChangeUserPassword", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
@@ -622,7 +863,7 @@ namespace AspNetForums.Data {
             // return all of the forums and their total and daily posts
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_GetMessage", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetMessage", myConnection);
             ForumMessage message;
 
             // Mark the Command as a SPROC
@@ -663,7 +904,7 @@ namespace AspNetForums.Data {
             // return all of the forums and their total and daily posts
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_GetModeratedPostsByForumId", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetModeratedPostsByForumId", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
@@ -701,7 +942,7 @@ namespace AspNetForums.Data {
         public ModeratedForumCollection GetForumsRequiringModeration(string username) {
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_GetModeratedForums", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetModeratedForums", myConnection);
             SqlDataReader reader;
             ModeratedForumCollection moderatedForums = new ModeratedForumCollection();
             ModeratedForum moderatedForum;
@@ -748,7 +989,7 @@ namespace AspNetForums.Data {
         public void MarkPostAsRead(int postID, string username) {
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_MarkPostAsRead", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_MarkPostAsRead", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
@@ -777,7 +1018,7 @@ namespace AspNetForums.Data {
 
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_GetTotalPostsForThread", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetTotalPostsForThread", myConnection);
             int postCount = 0;
 
             // Mark the Command as a SPROC
@@ -813,7 +1054,7 @@ namespace AspNetForums.Data {
 
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_GetAllUsers", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetAllUsers", myConnection);
             UserCollection users = new UserCollection();
 
             // Mark the Command as a SPROC
@@ -856,7 +1097,7 @@ namespace AspNetForums.Data {
         public int GetTotalThreadsInForum(int ForumID, DateTime maxDateTime, DateTime minDateTime, string username, bool unreadThreadsOnly) {
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_TopicCountForForum", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_TopicCountForForum", myConnection);
             int totalThreads = 0;
 
             // Mark the Command as a SPROC
@@ -892,6 +1133,282 @@ namespace AspNetForums.Data {
         }
 
         /****************************************************************
+        // AddUserToRole
+        //
+        /// <summary>
+        /// Adds a user to a role to elevate their permissions
+        /// </summary>
+        /// <param name="username">The username of the user to add to the role</param>
+        /// <param name="role">The role the user will be added to</param>
+        //
+        ****************************************************************/
+        public void AddUserToRole(string username, string role)
+        {
+            // Create Instance of Connection and Command Object
+            SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_AddUserToRole", myConnection);
+
+            // Mark the Command as a SPROC
+            myCommand.CommandType = CommandType.StoredProcedure;
+
+            // Add Parameters to SPROC
+            myCommand.Parameters.Add("@UserName", SqlDbType.NVarChar, 50).Value = username;
+            myCommand.Parameters.Add("@Rolename", SqlDbType.NVarChar, 256).Value = role;
+
+            myConnection.Open();
+            myCommand.ExecuteNonQuery();
+            myConnection.Close();
+        }
+
+        /****************************************************************
+        // AddForumToRole
+        //
+        /// <summary>
+        /// Adds a forum to a given role
+        /// </summary>
+        /// <param name="forumID">The id for the forum to be added to the role</param>
+        /// <param name="role">The role the user will be added to</param>
+        //
+        ****************************************************************/
+        public void AddForumToRole(int forumID, string role)
+        {
+            // Create Instance of Connection and Command Object
+            SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_AddForumToRole", myConnection);
+
+            // Mark the Command as a SPROC
+            myCommand.CommandType = CommandType.StoredProcedure;
+
+            // Add Parameters to SPROC
+            myCommand.Parameters.Add("@ForumID", SqlDbType.Int, 4).Value = forumID;
+            myCommand.Parameters.Add("@Rolename", SqlDbType.NVarChar, 256).Value = role;
+
+            myConnection.Open();
+            myCommand.ExecuteNonQuery();
+            myConnection.Close();
+        }
+
+        /****************************************************************
+        // RemoveUserFromRole
+        //
+        /// <summary>
+        /// Removes a user from a permissions role.
+        /// </summary>
+        /// <param name="username">The username of the user to remove from the role</param>
+        /// <param name="role">The role the user will be removed from</param>
+        //
+        ****************************************************************/
+        public void RemoveUserFromRole(string username, string role)
+        {
+            // Create Instance of Connection and Command Object
+            SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_RemoveUserFromRole", myConnection);
+
+            // Mark the Command as a SPROC
+            myCommand.CommandType = CommandType.StoredProcedure;
+
+            // Add Parameters to SPROC
+            myCommand.Parameters.Add("@UserName", SqlDbType.NVarChar, 50).Value = username;
+            myCommand.Parameters.Add("@Rolename", SqlDbType.NVarChar, 256).Value = role;
+
+            myConnection.Open();
+            myCommand.ExecuteNonQuery();
+            myConnection.Close();
+        }
+
+        /****************************************************************
+        // RemoveForumFromRole
+        //
+        /// <summary>
+        /// Removes a forum from a given permissions role.
+        /// </summary>
+        /// <param name="forumID">The forum ID for the forum to remove from the role.</param>
+        /// <param name="role">The role the user will be removed from</param>
+        //
+        ****************************************************************/
+        public void RemoveForumFromRole(int forumID, string role)
+        {
+            // Create Instance of Connection and Command Object
+            SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_RemoveForumFromRole", myConnection);
+
+            // Mark the Command as a SPROC
+            myCommand.CommandType = CommandType.StoredProcedure;
+
+            // Add Parameters to SPROC
+            myCommand.Parameters.Add("@ForumID", SqlDbType.Int, 4).Value = forumID;
+            myCommand.Parameters.Add("@Rolename", SqlDbType.NVarChar, 256).Value = role;
+
+            myConnection.Open();
+            myCommand.ExecuteNonQuery();
+            myConnection.Close();
+        }
+
+        /****************************************************************
+        // CreateNewRole
+        //
+        /// <summary>
+        /// Creates a new permissions role
+        /// </summary>
+        /// <param name="role">The name for the new permissions role</param>
+        /// <param name="description">The description of the new role useful for administration</param>
+        //
+        ****************************************************************/
+        public void CreateNewRole(string role, string description)
+        {
+            // Create Instance of Connection and Command Object
+            using(SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString))
+            {
+                SqlCommand myCommand = new SqlCommand("dbo.forums_CreateNewRole", myConnection);
+
+                // Mark the Command as a SPROC
+                myCommand.CommandType = CommandType.StoredProcedure;
+
+                // Add Parameters to SPROC
+                myCommand.Parameters.Add("@Rolename", SqlDbType.VarChar, 256).Value = role;
+                myCommand.Parameters.Add("@Description", SqlDbType.VarChar, 512).Value = description;
+
+                myConnection.Open();
+                myCommand.ExecuteNonQuery();
+                myConnection.Close();
+            }
+        }
+
+        /****************************************************************
+        // DeleteRole
+        //
+        /// <summary>
+        /// Deletes an existing role
+        /// </summary>
+        /// <param name="role">The name for the role to be deleted</param>
+        //
+        ****************************************************************/
+        public void DeleteRole(string role)
+        {
+            // Create Instance of Connection and Command Object
+            using(SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString))
+            {
+                SqlCommand myCommand = new SqlCommand("dbo.forums_DeleteRole", myConnection);
+
+                // Mark the Command as a SPROC
+                myCommand.CommandType = CommandType.StoredProcedure;
+
+                // Add Parameters to SPROC
+                myCommand.Parameters.Add("@Rolename", SqlDbType.VarChar, 256).Value = role;
+
+                myConnection.Open();
+                myCommand.ExecuteNonQuery();
+                myConnection.Close();
+            }
+        }
+
+        /****************************************************************
+        // GetRoleDescription
+        //
+        /// <summary>
+        /// Gets the description string for a role
+        /// </summary>
+        /// <param name="role">The name for the role a description is needed for</param>
+        //
+        ****************************************************************/
+        public string GetRoleDescription(string role)
+        {
+            string roleDescription;
+
+            // Create Instance of Connection and Command Object
+            using(SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString))
+            {
+                SqlCommand myCommand = new SqlCommand("dbo.forums_GetRoleDescription", myConnection);
+
+                // Mark the Command as a SPROC
+                myCommand.CommandType = CommandType.StoredProcedure;
+
+                // Add Parameters to SPROC
+                myCommand.Parameters.Add("@Rolename", SqlDbType.VarChar, 256).Value = role;
+
+                myConnection.Open();
+                roleDescription = (string) myCommand.ExecuteScalar();
+                myConnection.Close();
+            }
+
+            return roleDescription;
+        }
+
+        /****************************************************************
+        // UpdateRoleDescription
+        //
+        /// <summary>
+        /// Updates the description of a given role for administration purposes
+        /// </summary>
+        /// <param name="role">The name of the permissions role to be updated</param>
+        /// <param name="description">The new description of the role useful for administration</param>
+        //
+        ****************************************************************/
+        public void UpdateRoleDescription(string role, string description)
+        {
+            // Create Instance of Connection and Command Object
+            using(SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString))
+            {
+                SqlCommand myCommand = new SqlCommand("dbo.forums_UpdateRoleDescription", myConnection);
+
+                // Mark the Command as a SPROC
+                myCommand.CommandType = CommandType.StoredProcedure;
+
+                // Add Parameters to SPROC
+                myCommand.Parameters.Add("@RoleName", SqlDbType.VarChar, 256).Value = role;
+                myCommand.Parameters.Add("@Description", SqlDbType.VarChar, 512).Value = description;
+
+                myConnection.Open();
+                myCommand.ExecuteNonQuery();
+                myConnection.Close();
+            }
+        }
+
+        /****************************************************************
+        // GetUserRoles
+        //
+        /// <summary>
+        /// Returns a string array of role names
+        /// </summary>
+        //
+        ****************************************************************/
+        public String[] GetAllRoles() 
+        {
+            string[] roles;
+
+            // Create Instance of Connection and Command Object
+            SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetAllRoles", myConnection);
+
+            // Mark the Command as a SPROC
+            myCommand.CommandType = CommandType.StoredProcedure;
+
+            // Open the database connection and execute the command
+            SqlDataReader dr;
+
+            myConnection.Open();
+            dr = myCommand.ExecuteReader();
+
+            // create a String array from the data
+            ArrayList userRoles = new ArrayList();
+
+            while (dr.Read()) 
+            {
+                userRoles.Add(dr["RoleName"]);
+            }
+
+            dr.Close();
+
+            // Return the String array of roles
+            roles = (String[]) userRoles.ToArray(typeof(String));
+
+            // Close the connection
+            myConnection.Close();
+
+            return roles;
+        }
+            
+        /****************************************************************
         // GetUserRoles
         //
         /// <summary>
@@ -900,10 +1417,13 @@ namespace AspNetForums.Data {
         /// <param name="username">username to find roles for</param>
         //
         ****************************************************************/
-        public String[] GetUserRoles(string username) {
+        public String[] GetUserRoles(string username) 
+        {
+            string[] roles;
+
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_GetRolesByUser", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetRolesByUser", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
@@ -915,7 +1435,7 @@ namespace AspNetForums.Data {
             SqlDataReader dr;
 
             myConnection.Open();
-            dr = myCommand.ExecuteReader(CommandBehavior.CloseConnection);
+            dr = myCommand.ExecuteReader();
 
             // create a String array from the data
             ArrayList userRoles = new ArrayList();
@@ -927,7 +1447,58 @@ namespace AspNetForums.Data {
             dr.Close();
 
             // Return the String array of roles
-            return (string[]) userRoles.ToArray(typeof(String));
+            roles = (string[]) userRoles.ToArray(typeof(String));
+
+            myConnection.Close();
+
+            return roles;
+        }
+
+        /****************************************************************
+        // GetUserRoles
+        //
+        /// <summary>
+        /// Returns a string array of role names that the user belongs to
+        /// </summary>
+        /// <param name="username">username to find roles for</param>
+        //
+        ****************************************************************/
+        public String[] GetForumRoles(int forumID) 
+        {
+            string[] roles;
+
+            // Create Instance of Connection and Command Object
+            SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetRolesByForum", myConnection);
+
+            // Mark the Command as a SPROC
+            myCommand.CommandType = CommandType.StoredProcedure;
+
+            // Add Parameters to SPROC
+            myCommand.Parameters.Add("@ForumID", SqlDbType.Int, 4).Value = forumID;
+
+            // Open the database connection and execute the command
+            SqlDataReader dr;
+
+            myConnection.Open();
+            dr = myCommand.ExecuteReader();
+
+            // create a String array from the data
+            ArrayList forumRoles = new ArrayList();
+
+            while (dr.Read()) 
+            {
+                forumRoles.Add(dr["RoleName"]);
+            }
+
+            dr.Close();
+
+            // Return the String array of roles
+            roles = (string[]) forumRoles.ToArray(typeof(String));
+
+            myConnection.Close();
+
+            return roles;
         }
 
         /****************************************************************
@@ -943,7 +1514,7 @@ namespace AspNetForums.Data {
 
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_TrackAnonymousUsers", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_TrackAnonymousUsers", myConnection);
             SqlParameter param;
 
             // Mark the Command as a SPROC
@@ -972,7 +1543,7 @@ namespace AspNetForums.Data {
         public ForumGroup GetForumGroupByForumId(int forumID) {
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_GetForumGroupByForumID", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetForumGroupByForumID", myConnection);
             SqlDataReader dr;
             ForumGroup forumGroup = null;
 
@@ -1009,7 +1580,7 @@ namespace AspNetForums.Data {
 
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_AddForumGroup", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_AddForumGroup", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
@@ -1038,7 +1609,7 @@ namespace AspNetForums.Data {
 
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_MarkAllThreadsRead", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_MarkAllThreadsRead", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
@@ -1073,7 +1644,7 @@ namespace AspNetForums.Data {
         public void UpdateForumGroup(string forumGroupName, int forumGroupId) {
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_UpdateForumGroup", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_UpdateForumGroup", myConnection);
             SqlParameter param;
 
             // Mark the Command as a SPROC
@@ -1131,7 +1702,7 @@ namespace AspNetForums.Data {
             post.IsLocked = Convert.ToBoolean(dr["IsLocked"]);
             post.Views = Convert.ToInt32(dr["TotalViews"]);
             post.HasRead = Convert.ToBoolean(dr["HasRead"]);
-			
+            
             return post;
         }
 
@@ -1183,6 +1754,7 @@ namespace AspNetForums.Data {
         private  Forum PopulateForumFromSqlDataReader(SqlDataReader dr) {
             Forum forum = new Forum();
             forum.ForumID = Convert.ToInt32(dr["ForumID"]);
+            forum.ParentId = Convert.ToInt32(dr["ParentID"]);
             forum.ForumGroupId = Convert.ToInt32(dr["ForumGroupId"]);
             forum.DateCreated = Convert.ToDateTime(dr["DateCreated"]);
             forum.Description = Convert.ToString(dr["Description"]);
@@ -1192,6 +1764,7 @@ namespace AspNetForums.Data {
             forum.Active = Convert.ToBoolean(dr["Active"]);
             forum.SortOrder = Convert.ToInt32(dr["SortOrder"]);
             forum.IsPrivate = Convert.ToBoolean(dr["IsPrivate"]);
+            forum.DisplayMask = (byte[]) dr["DisplayMask"];
 
             return forum;
         }
@@ -1221,7 +1794,7 @@ namespace AspNetForums.Data {
 
             return forumGroup;
         }
-	
+    
 
         /// <summary>
         /// Builds and returns an instance of the User class based on the current row of an
@@ -1256,16 +1829,18 @@ namespace AspNetForums.Data {
             user.YahooIM = (string) dr["Yahoo"];
             user.IcqIM = (string) dr["ICQ"];
             user.TotalPosts = (int) dr["TotalPosts"];
-            user.HasIcon = (bool) dr["HasIcon"];
+            user.HasAvatar = (bool) dr["HasAvatar"];
             user.HideReadThreads = (bool) dr["ShowUnreadTopicsOnly"];
-            user.SiteStyle = (string) dr["Style"];
-            user.IconExtension = (string) dr["ImageType"];
-            user.ShowIcon = (bool) dr["ShowIcon"];
+            user.Skin = (string) dr["Style"];
+            user.Avatar = (AspNetForums.Components.AvatarType) (int) dr["AvatarType"];
+            user.AvatarUrl = (string) dr["AvatarUrl"];
+            user.ShowAvatar = (bool) dr["ShowAvatar"];
             user.DateFormat = (string) dr["DateFormat"];
             user.ShowPostsAscending = (bool) dr["PostViewOrder"];
             user.ViewPostsInFlatView = (bool) dr["FlatView"];
             user.IsModerator = Convert.ToBoolean(dr["IsModerator"]);
-		
+            user.Attributes = (byte[]) dr["Attributes"];
+        
             switch (Convert.ToInt32(dr["ForumView"])) {
                 case 0:
                     user.ForumView = ViewOptions.Flat;
@@ -1283,12 +1858,12 @@ namespace AspNetForums.Data {
                     user.ForumView = ViewOptions.NotSet;
                     break;
             }
-			
+            
             return user;
         }
 
 
-		
+        
         /// <summary>
         /// Builds and returns an instance of the EmailTemplate class based on the current row of an
         /// aptly populated SqlDataReader object.
@@ -1299,7 +1874,7 @@ namespace AspNetForums.Data {
         /// in SqlDataReader, dr.</returns>
         private  EmailTemplate PopulateEmailTemplateFromSqlDataReader(SqlDataReader dr) {
             EmailTemplate email = new EmailTemplate();
-			
+            
             email.EmailTemplateID = Convert.ToInt32(dr["EmailID"]);
             email.Subject = Convert.ToString(dr["Subject"]);
             email.Body = Convert.ToString(dr["Message"]);
@@ -1315,7 +1890,7 @@ namespace AspNetForums.Data {
                     email.Priority = MailPriority.High;
                     break;
 
-                default:		// the default
+                default:        // the default
                     email.Priority = MailPriority.Normal;
                     break;
             }
@@ -1342,8 +1917,12 @@ namespace AspNetForums.Data {
         public ThreadCollection GetAllThreads(int forumID, int pageSize, int pageIndex, DateTime endDate, string username, bool unreadThreadsOnly) {
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_GetAllTopicsPaged", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetAllTopicsPaged", myConnection);
             ThreadCollection threads;
+
+            // Ensure DateTime is min value for SQL
+            if (endDate == DateTime.MinValue)
+                endDate = (DateTime) System.Data.SqlTypes.SqlDateTime.MinValue;
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
@@ -1394,7 +1973,7 @@ namespace AspNetForums.Data {
         public  PostCollection GetAllMessages(int ForumID, ViewOptions ForumView, int PagesBack) {
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_GetAllMessages", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetAllMessages", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
@@ -1440,7 +2019,7 @@ namespace AspNetForums.Data {
         public  PostCollection GetSubjectsByForum(int ForumID, ViewOptions ForumView, int PagesBack) {
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_GetAllMessages", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetAllMessages", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
@@ -1472,6 +2051,41 @@ namespace AspNetForums.Data {
             return posts;
         }
 
+        /// is the user tracking this thread?
+        public bool IsUserTrackingThread(int threadID, string username) {
+
+            bool userIsTrackingPost = false; 
+
+            // If username is null, don't continue
+            if (username == null)
+                return userIsTrackingPost;
+
+            // Create Instance of Connection and Command Object
+            SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_IsUserTrackingPost", myConnection);
+
+            // Mark the Command as a SPROC
+            myCommand.CommandType = CommandType.StoredProcedure;
+
+            // Add Parameters to SPROC
+            myCommand.Parameters.Add("@ThreadID", SqlDbType.Int).Value = threadID;
+            myCommand.Parameters.Add("@Username", SqlDbType.NVarChar, 50).Value = username;
+
+            // Execute the command
+            myConnection.Open();
+            SqlDataReader dr = myCommand.ExecuteReader();
+
+            if (!dr.Read())
+                return userIsTrackingPost;
+
+            userIsTrackingPost = Convert.ToBoolean(dr["IsUserTrackingPost"]);
+
+            dr.Close();
+            myConnection.Close();
+
+            return userIsTrackingPost;
+        }
+
         /// <summary>
         /// Gets the details for a particular post.  These details include the IDs of the next/previous
         /// post and the next/prev thread, along with information about the user who posted the post.
@@ -1485,7 +2099,7 @@ namespace AspNetForums.Data {
         public  PostDetails GetPostDetails(int postID, String username) {
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_GetSingleMessage", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetSingleMessage", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
@@ -1526,6 +2140,7 @@ namespace AspNetForums.Data {
             post.PrevThreadID = Convert.ToInt32(dr["PrevThreadID"]);
             post.ThreadTracking = Convert.ToBoolean(dr["UserIsTrackingThread"]);
             post.ForumName = Convert.ToString(dr["ForumName"]);
+            post.IsLocked = Convert.ToBoolean(dr["IsLocked"]);
 
             // populate information about the User
             User user = new User();
@@ -1533,7 +2148,7 @@ namespace AspNetForums.Data {
             user.PublicEmail = Convert.ToString(dr["FakeEmail"]);
             user.Url = Convert.ToString(dr["URL"]);
             user.Signature = Convert.ToString(dr["Signature"]);
-			
+            
             post.UserInfo = user;
 
             dr.Close();
@@ -1552,7 +2167,7 @@ namespace AspNetForums.Data {
 
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_GetTotalPostCount", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetTotalPostCount", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
@@ -1583,27 +2198,19 @@ namespace AspNetForums.Data {
         public  Post GetPost(int postID, string username, bool trackViews) {
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_GetPostInfo", myConnection);
-            SqlParameter param;
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetPostInfo", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
 
             // Add Parameters to SPROC
-            param = new SqlParameter("@PostID", SqlDbType.Int, 4);
-            param.Value = postID;
-            myCommand.Parameters.Add(param);
+            myCommand.Parameters.Add("@PostID", SqlDbType.Int).Value = postID;
+            myCommand.Parameters.Add("@TrackViews", SqlDbType.Bit).Value = trackViews;
 
-            param = new SqlParameter("@TrackViews", SqlDbType.Bit);
-            param.Value = trackViews;
-            myCommand.Parameters.Add(param);
-
-            param = new SqlParameter("@Username", SqlDbType.NVarChar, 50);
             if (username == null)
-                param.Value = System.DBNull.Value;
+                myCommand.Parameters.Add("@Username", SqlDbType.NVarChar, 50).Value = System.DBNull.Value;
             else
-                param.Value = username;
-            myCommand.Parameters.Add(param);
+                myCommand.Parameters.Add("@Username", SqlDbType.NVarChar, 50).Value = username;
 
             // Execute the command
             myConnection.Open();
@@ -1621,12 +2228,12 @@ namespace AspNetForums.Data {
             myConnection.Close();
 
 
-            // we have a post to work with	
+            // we have a post to work with  
             return p;
         }
 
 
-	
+    
         /// <summary>
         /// Reverses a particular user's email thread tracking options for the thread that contains
         /// the post specified by PostID.  That is, if a User has email thread tracking turned on for
@@ -1639,13 +2246,13 @@ namespace AspNetForums.Data {
         public  void ReverseThreadTracking(String Username, int PostID) {
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_ReverseTrackingOption", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_ReverseTrackingOption", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
 
             // Add Parameters to SPROC
-            SqlParameter parameterUsername = new SqlParameter("@Username", SqlDbType.VarChar, 50);
+            SqlParameter parameterUsername = new SqlParameter("@Username", SqlDbType.NVarChar, 50);
             parameterUsername.Value = Username;
             myCommand.Parameters.Add(parameterUsername);
 
@@ -1670,7 +2277,7 @@ namespace AspNetForums.Data {
         public  PostCollection GetThread(int ThreadID) {
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_GetThread", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetThread", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
@@ -1706,7 +2313,7 @@ namespace AspNetForums.Data {
 
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_GetThreadByPostIDPaged", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetThreadByPostIDPaged", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
@@ -1745,7 +2352,9 @@ namespace AspNetForums.Data {
             // loop through the results
             PostCollection posts = new PostCollection();
             while (dr.Read()) {
-                posts.Add(PopulatePostFromSqlDataReader(dr));
+                Post p = PopulatePostFromSqlDataReader(dr);
+                p.PostType = (Posts.PostType) dr["PostType"];
+                posts.Add(p);
             }
 
             dr.Close();
@@ -1754,7 +2363,7 @@ namespace AspNetForums.Data {
             return posts;
         }
 
-		
+        
         /// <summary>
         /// Returns a collection of Posts that make up a particular thread.
         /// </summary>
@@ -1764,7 +2373,7 @@ namespace AspNetForums.Data {
 
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_GetThreadByPostID", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetThreadByPostID", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
@@ -1814,15 +2423,15 @@ namespace AspNetForums.Data {
             SqlParameter param;
             myConnection.Open();
 
-            SqlParameter parameterUserName = new SqlParameter("@Username", SqlDbType.VarChar, 50);
+            SqlParameter parameterUserName = new SqlParameter("@Username", SqlDbType.NVarChar, 50);
             parameterUserName.Value = postToAdd.Username;
 
-            SqlParameter parameterBody = new SqlParameter("@Body", SqlDbType.Text);
+            SqlParameter parameterBody = new SqlParameter("@Body", SqlDbType.NText);
             parameterBody.Value = postToAdd.Body;
 
             if (!Globals.AllowDuplicatePosts) {
-                SqlCommand checkForDupsCommand = new SqlCommand("sp_IsDuplicatePost", myConnection);
-                checkForDupsCommand.CommandType = CommandType.StoredProcedure;	// Mark the Command as a SPROC
+                SqlCommand checkForDupsCommand = new SqlCommand("dbo.forums_IsDuplicatePost", myConnection);
+                checkForDupsCommand.CommandType = CommandType.StoredProcedure;  // Mark the Command as a SPROC
                 checkForDupsCommand.Parameters.Add(parameterUserName);
                 checkForDupsCommand.Parameters.Add(parameterBody);
 
@@ -1831,10 +2440,10 @@ namespace AspNetForums.Data {
                     throw new PostDuplicateException("Attempting to insert a duplicate post.");
                 }
 
-                checkForDupsCommand.Parameters.Clear();			// clear the parameters
+                checkForDupsCommand.Parameters.Clear();         // clear the parameters
             }
 
-            SqlCommand myCommand = new SqlCommand("sp_AddPost", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_AddPost", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
@@ -1848,7 +2457,7 @@ namespace AspNetForums.Data {
             parameterPostId.Value = postToAdd.ParentID;
             myCommand.Parameters.Add(parameterPostId);
 
-            SqlParameter parameterSubject = new SqlParameter("@Subject", SqlDbType.VarChar, 256);
+            SqlParameter parameterSubject = new SqlParameter("@Subject", SqlDbType.NVarChar, 256);
             parameterSubject.Value = postToAdd.Subject;
             myCommand.Parameters.Add(parameterSubject);
 
@@ -1868,7 +2477,7 @@ namespace AspNetForums.Data {
 
             // Execute the command
             int iNewPostID = 0;
-			
+            
             try {
                 // Get the new PostID
                 iNewPostID = Convert.ToInt32(myCommand.ExecuteScalar().ToString());
@@ -1885,7 +2494,7 @@ namespace AspNetForums.Data {
             return GetPost(iNewPostID, username, false);
         }
 
-		
+        
 
         /// <summary>
         /// Updates a post.
@@ -1896,8 +2505,7 @@ namespace AspNetForums.Data {
         public void UpdatePost(Post post, string editedBy) {
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_UpdatePost", myConnection);
-            SqlParameter param;
+            SqlCommand myCommand = new SqlCommand("dbo.forums_UpdatePost", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
@@ -1905,7 +2513,7 @@ namespace AspNetForums.Data {
             // Add Parameters to SPROC
             myCommand.Parameters.Add("@PostID", SqlDbType.Int, 4).Value = post.PostID;
             myCommand.Parameters.Add("@Subject", SqlDbType.NVarChar, 256).Value = post.Subject;
-            myCommand.Parameters.Add("@Body", SqlDbType.Text).Value = post.Body;
+            myCommand.Parameters.Add("@Body", SqlDbType.NText).Value = post.Body;
             myCommand.Parameters.Add("@IsLocked", SqlDbType.Bit).Value = post.IsLocked;
             myCommand.Parameters.Add("@EditedBy", SqlDbType.NVarChar, 50).Value = editedBy;
 
@@ -1923,7 +2531,7 @@ namespace AspNetForums.Data {
         }
 
 
-		
+        
         /// <summary>
         /// This method deletes a particular post and all of its replies.
         /// </summary>
@@ -1932,7 +2540,7 @@ namespace AspNetForums.Data {
             // Delete the post
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_DeleteModeratedPost", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_DeleteModeratedPost", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
@@ -1957,7 +2565,7 @@ namespace AspNetForums.Data {
                  * These functions return information about a forum.
                  * are called from the WebForums.Forums class.
                  * **************************************************************/
-	
+    
         /// <summary>
         /// Returns information about a particular forum that contains a particular thread.
         /// </summary>
@@ -1970,7 +2578,7 @@ namespace AspNetForums.Data {
         public  Forum GetForumInfoByThreadID(int ThreadID) {
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_GetForumByThreadID", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetForumByThreadID", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
@@ -2010,7 +2618,7 @@ namespace AspNetForums.Data {
         public  Forum GetForumInfo(int forumID, string username) {
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_GetForumInfo", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetForumInfo", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
@@ -2057,7 +2665,7 @@ namespace AspNetForums.Data {
         public  Forum GetForumInfoByPostID(int PostID) {
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_GetForumByPostID", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetForumByPostID", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
@@ -2089,7 +2697,7 @@ namespace AspNetForums.Data {
             // return all of the forums and their total and daily posts
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_GetForumsByForumGroupId", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetForumsByForumGroupId", myConnection);
             SqlParameter param;
 
             // Mark the Command as a SPROC
@@ -2126,7 +2734,7 @@ namespace AspNetForums.Data {
                 forum = PopulateForumFromSqlDataReader(dr);
 
                 forum.TotalPosts = Convert.ToInt32(dr["TotalPosts"]);
-                forum.TotalThreads = Convert.ToInt32(dr["TotalThreads"]);
+                forum.TotalThreads = Convert.ToInt32(dr["TotalTopics"]);
                 forum.ForumGroupId = (int) dr["ForumGroupId"];
 
                 // Handle Nulls in the case that we don't have a 'most recent post...'
@@ -2171,7 +2779,7 @@ namespace AspNetForums.Data {
 
             // Connect to the database
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_GetAllForumGroups", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetAllForumGroups", myConnection);
 
             myCommand.CommandType = CommandType.StoredProcedure;
 
@@ -2209,7 +2817,7 @@ namespace AspNetForums.Data {
             // return all of the forums and their total and daily posts
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_GetAllForums", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetAllForums", myConnection);
             SqlParameter param;
 
             // Mark the Command as a SPROC
@@ -2242,7 +2850,7 @@ namespace AspNetForums.Data {
                 forum.TotalPosts = Convert.ToInt32(dr["TotalPosts"]);
                 forum.TotalThreads = Convert.ToInt32(dr["TotalTopics"]);
                 forum.ForumGroupId = (int) dr["ForumGroupId"];
-				
+                
                 // Handle Nulls
                 if (Convert.IsDBNull(dr["MostRecentPostAuthor"]))
                     forum.MostRecentPostAuthor = null;
@@ -2281,42 +2889,7 @@ namespace AspNetForums.Data {
         }
 
 
-
-        /// <summary>
-        /// Returns a list of all forums less one particular forum.
-        /// </summary>
-        /// <param name="PostID">The ID of a Post that is in the Forum you wish to exclude.</param>
-        /// <returns>A ForumCollection that contains all of the Forums except for the forum that contains
-        /// the PostID passed in.</returns>
-        public  ForumCollection GetAllButOneForum(int PostID) {
-            // Create Instance of Connection and Command Object
-            SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_GetAllButOneForum", myConnection);
-
-            // Mark the Command as a SPROC
-            myCommand.CommandType = CommandType.StoredProcedure;
-
-            SqlParameter parameterPostID = new SqlParameter("@PostID", SqlDbType.Int, 4);
-            parameterPostID.Value = PostID;
-            myCommand.Parameters.Add(parameterPostID);
-
-            // Execute the command
-            myConnection.Open();
-            SqlDataReader dr = myCommand.ExecuteReader(CommandBehavior.CloseConnection);
-
-            // populate a ForumCollection object
-            ForumCollection forums = new ForumCollection();
-            while (dr.Read()) {
-                forums.Add(PopulateForumFromSqlDataReader(dr));
-            }
-
-            dr.Close();
-            myConnection.Close();
-
-            return forums;
-        }
-
-		
+    
 
         /// <summary>
         /// Deletes a forum and all of its posts.
@@ -2328,7 +2901,7 @@ namespace AspNetForums.Data {
             // return all of the forums and their total and daily posts
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_DeleteForum", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_DeleteForum", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
@@ -2353,17 +2926,17 @@ namespace AspNetForums.Data {
         public void AddForum(Forum forum) {
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_AddForum", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_AddForum", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
 
             // Add Parameters to SPROC
-            SqlParameter parameterForumName = new SqlParameter("@Name", SqlDbType.VarChar, 100);
+            SqlParameter parameterForumName = new SqlParameter("@Name", SqlDbType.NVarChar, 100);
             parameterForumName.Value = forum.Name;
             myCommand.Parameters.Add(parameterForumName);
 
-            SqlParameter parameterForumDesc = new SqlParameter("@Description", SqlDbType.VarChar, 5000);
+            SqlParameter parameterForumDesc = new SqlParameter("@Description", SqlDbType.NVarChar, 5000);
             parameterForumDesc.Value = forum.Description;
             myCommand.Parameters.Add(parameterForumDesc);
 
@@ -2401,7 +2974,7 @@ namespace AspNetForums.Data {
         public  void UpdateForum(Forum forum) {
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_UpdateForum", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_UpdateForum", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
@@ -2413,11 +2986,11 @@ namespace AspNetForums.Data {
             parameterForumId.Value = forum.ForumID;
             myCommand.Parameters.Add(parameterForumId);
 
-            SqlParameter parameterForumName = new SqlParameter("@Name", SqlDbType.VarChar, 100);
+            SqlParameter parameterForumName = new SqlParameter("@Name", SqlDbType.NVarChar, 100);
             parameterForumName.Value = forum.Name;
             myCommand.Parameters.Add(parameterForumName);
 
-            SqlParameter parameterForumDesc = new SqlParameter("@Description", SqlDbType.VarChar, 5000);
+            SqlParameter parameterForumDesc = new SqlParameter("@Description", SqlDbType.NVarChar, 5000);
             parameterForumDesc.Value = forum.Description;
             myCommand.Parameters.Add(parameterForumDesc);
 
@@ -2449,7 +3022,7 @@ namespace AspNetForums.Data {
 
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_GetTotalNumberOfForums", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetTotalNumberOfForums", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
@@ -2472,7 +3045,7 @@ namespace AspNetForums.Data {
                  * These functions return information about a user.
                  * are called from the WebForums.Users class.
                  * *************************************************************/
-	
+    
         /// <summary>
         /// Retrieves information about a particular user.
         /// </summary>
@@ -2484,14 +3057,14 @@ namespace AspNetForums.Data {
 
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_GetUserInfo", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetUserInfo", myConnection);
             SqlParameter param;
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
 
             // Add Parameters to SPROC
-            param = new SqlParameter("@UserName", SqlDbType.VarChar, 50);
+            param = new SqlParameter("@UserName", SqlDbType.NVarChar, 50);
             param.Value = username;
             myCommand.Parameters.Add(param);
 
@@ -2528,7 +3101,7 @@ namespace AspNetForums.Data {
         public int TotalAnonymousUsersOnline() {
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_GetAnonymousUsersOnline", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetAnonymousUsersOnline", myConnection);
             int anonymousUserCount = 0;
 
             // Mark the Command as a SPROC
@@ -2557,7 +3130,7 @@ namespace AspNetForums.Data {
         public UserCollection WhoIsOnline(int pastMinutes) {
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_GetUsersOnline", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetUsersOnline", myConnection);
             UserCollection users = new UserCollection();
 
             // Mark the Command as a SPROC
@@ -2586,7 +3159,7 @@ namespace AspNetForums.Data {
 
             return users;
         }
-	
+    
         /// <summary>
         /// Updates a user's information.
         /// </summary>
@@ -2599,7 +3172,7 @@ namespace AspNetForums.Data {
 
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_UpdateUserInfo", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_UpdateUserInfo", myConnection);
             SqlParameter param;
             bool succeded = false;
 
@@ -2607,62 +3180,62 @@ namespace AspNetForums.Data {
             myCommand.CommandType = CommandType.StoredProcedure;
 
             // Username
-            param = new SqlParameter("@UserName", SqlDbType.VarChar, 50);
+            param = new SqlParameter("@UserName", SqlDbType.NVarChar, 50);
             param.Value = user.Username;
             myCommand.Parameters.Add(param);
 
             // Email
-            param = new SqlParameter("@Email", SqlDbType.VarChar, 75);
+            param = new SqlParameter("@Email", SqlDbType.NVarChar, 75);
             param.Value = user.Email;
             myCommand.Parameters.Add(param);
 
             // Fake Email
-            param = new SqlParameter("@FakeEmail", SqlDbType.VarChar, 75);
+            param = new SqlParameter("@FakeEmail", SqlDbType.NVarChar, 75);
             param.Value = user.PublicEmail;
             myCommand.Parameters.Add(param);
 
             // Website
-            param = new SqlParameter("@URL", SqlDbType.VarChar, 100);
+            param = new SqlParameter("@URL", SqlDbType.NVarChar, 100);
             param.Value = user.Url;
             myCommand.Parameters.Add(param);
 
             // Occupation
-            param = new SqlParameter("@Occupation", SqlDbType.VarChar, 100);
+            param = new SqlParameter("@Occupation", SqlDbType.NVarChar, 100);
             param.Value = user.Occupation;
             myCommand.Parameters.Add(param);
 
             // Location
-            param = new SqlParameter("@Location", SqlDbType.VarChar, 100);
+            param = new SqlParameter("@Location", SqlDbType.NVarChar, 100);
             param.Value = user.Location;
             myCommand.Parameters.Add(param);
 
             // Interests
-            param = new SqlParameter("@Interests", SqlDbType.VarChar, 200);
+            param = new SqlParameter("@Interests", SqlDbType.NVarChar, 200);
             param.Value = user.Interests;
             myCommand.Parameters.Add(param);
 
             // MSN IM
-            param = new SqlParameter("@MsnIm", SqlDbType.VarChar, 50);
+            param = new SqlParameter("@MsnIm", SqlDbType.NVarChar, 50);
             param.Value = user.MsnIM;
             myCommand.Parameters.Add(param);
 
             // AOL IM
-            param = new SqlParameter("@AolIm", SqlDbType.VarChar, 50);
+            param = new SqlParameter("@AolIm", SqlDbType.NVarChar, 50);
             param.Value = user.AolIM;
             myCommand.Parameters.Add(param);
 
             // Yahoo IM
-            param = new SqlParameter("@YahooIm", SqlDbType.VarChar, 50);
+            param = new SqlParameter("@YahooIm", SqlDbType.NVarChar, 50);
             param.Value = user.YahooIM;
             myCommand.Parameters.Add(param);
 
             // ICQ
-            param = new SqlParameter("@IcqIm", SqlDbType.VarChar, 50);
+            param = new SqlParameter("@IcqIm", SqlDbType.NVarChar, 50);
             param.Value = user.IcqIM;
             myCommand.Parameters.Add(param);
 
             // Signature
-            param = new SqlParameter("@Signature", SqlDbType.VarChar, 255);
+            param = new SqlParameter("@Signature", SqlDbType.NVarChar, 256);
             param.Value = user.Signature;
             myCommand.Parameters.Add(param);
 
@@ -2686,17 +3259,17 @@ namespace AspNetForums.Data {
             param.Value = user.DateFormat;
             myCommand.Parameters.Add(param);
 
-            // HasIcon
-            myCommand.Parameters.Add("@HasIcon", SqlDbType.Bit).Value = user.HasIcon;
+            // HasAvatar
+            myCommand.Parameters.Add("@HasAvatar", SqlDbType.Bit).Value = user.HasAvatar;
 
-            // ShowIcon
-            myCommand.Parameters.Add("@ShowIcon", SqlDbType.Bit).Value = user.ShowIcon;
+            // ShowAvatar
+            myCommand.Parameters.Add("@ShowAvatar", SqlDbType.Bit).Value = user.ShowAvatar;
 
             // Post display order
             myCommand.Parameters.Add("@PostViewOrder", SqlDbType.Bit).Value = Convert.ToBoolean(user.ShowPostsAscending);
 
             // Password
-            param = new SqlParameter("@Password", SqlDbType.VarChar, 20);
+            param = new SqlParameter("@Password", SqlDbType.NVarChar, 20);
             param.Value = user.Password;
             myCommand.Parameters.Add(param);
 
@@ -2707,12 +3280,12 @@ namespace AspNetForums.Data {
 
             // Site Style
             param = new SqlParameter("@SiteStyle", SqlDbType.NVarChar, 20);
-            param.Value = user.SiteStyle;
+            param.Value = user.Skin;
             myCommand.Parameters.Add(param);
 
-            // Image Type
-            param = new SqlParameter("@ImageType", SqlDbType.NVarChar, 3);
-            param.Value = user.IconExtension;
+            // AvatarType
+            param = new SqlParameter("@AvatarType", SqlDbType.Int);
+            param.Value = user.Avatar;
             myCommand.Parameters.Add(param);
 
             // Execute the command
@@ -2733,7 +3306,7 @@ namespace AspNetForums.Data {
         public  UserCollection GetUsersByFirstCharacter(String FirstCharacter) {
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_GetUsersByFirstCharacter", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetUsersByFirstCharacter", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
@@ -2756,7 +3329,7 @@ namespace AspNetForums.Data {
             return users;
         }
 
-		
+        
 
         /// <summary>
         /// Updates a user's information via the administration page.
@@ -2767,12 +3340,12 @@ namespace AspNetForums.Data {
         public void UpdateUserInfoFromAdminPage(User user) {
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_UpdateUserFromAdminPage", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_UpdateUserFromAdminPage", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
 
-            myCommand.Parameters.Add("@Username", SqlDbType.VarChar, 50).Value = user.Username;
+            myCommand.Parameters.Add("@Username", SqlDbType.NVarChar, 50).Value = user.Username;
             myCommand.Parameters.Add("@ProfileApproved", SqlDbType.Bit, 1).Value = user.IsProfileApproved;
             myCommand.Parameters.Add("@Approved", SqlDbType.Bit, 1).Value = user.IsApproved;
             myCommand.Parameters.Add("@Trusted", SqlDbType.Bit, 1).Value = user.IsTrusted;
@@ -2783,7 +3356,7 @@ namespace AspNetForums.Data {
             myConnection.Close();
         }
 
-		
+        
         /// <summary>
         /// This method creates a new user if possible.  If the username or
         /// email addresses already exist, an appropriate CreateUserStatus message is
@@ -2802,21 +3375,21 @@ namespace AspNetForums.Data {
 
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_CreateNewUser", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_CreateNewUser", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
 
             // Add Parameters to SPROC
-            SqlParameter parameterUsername = new SqlParameter("@Username", SqlDbType.VarChar, 50);
+            SqlParameter parameterUsername = new SqlParameter("@Username", SqlDbType.NVarChar, 50);
             parameterUsername.Value = user.Username;
             myCommand.Parameters.Add(parameterUsername);
 
-            SqlParameter parameterEmail = new SqlParameter("@Email", SqlDbType.VarChar, 75);
+            SqlParameter parameterEmail = new SqlParameter("@Email", SqlDbType.NVarChar, 75);
             parameterEmail.Value = user.Email;
             myCommand.Parameters.Add(parameterEmail);
 
-            SqlParameter parameterPassword = new SqlParameter("@RandomPassword", SqlDbType.VarChar, 20);
+            SqlParameter parameterPassword = new SqlParameter("@RandomPassword", SqlDbType.NVarChar, 20);
             parameterPassword.Value = user.Password;
             myCommand.Parameters.Add(parameterPassword);
             
@@ -2828,29 +3401,29 @@ namespace AspNetForums.Data {
             
             CreateUserStatus status;
             switch (iStatusCode) {
-                case 1:		// user created successfully
+                case 1:     // user created successfully
                     status = CreateUserStatus.Created;
                     break;
 
-                case 2:		// username duplicate
+                case 2:     // username duplicate
                     status = CreateUserStatus.DuplicateUsername;
                     break;
 
-                case 3:		// email address duplicate
+                case 3:     // email address duplicate
                     status = CreateUserStatus.DuplicateEmailAddress;
                     break;
 
-                default:	// oops, something bad happened
+                default:    // oops, something bad happened
                     status = CreateUserStatus.UnknownFailure;
                     break;
             }
 
             myConnection.Close();
 
-            return status;		// return the status result
+            return status;      // return the status result
         }
 
-		
+        
         /// <summary>
         /// This method determines whether or not a particular username/password combo
         /// is valid.
@@ -2860,17 +3433,17 @@ namespace AspNetForums.Data {
         public bool ValidUser(User user) {
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_CheckUserCredentials", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_CheckUserCredentials", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
 
             // Add Parameters to SPROC
-            SqlParameter parameterUsername = new SqlParameter("@Username", SqlDbType.VarChar, 50);
+            SqlParameter parameterUsername = new SqlParameter("@Username", SqlDbType.NVarChar, 50);
             parameterUsername.Value = user.Username;
             myCommand.Parameters.Add(parameterUsername);
 
-            SqlParameter parameterPassword = new SqlParameter("@Password", SqlDbType.VarChar, 20);
+            SqlParameter parameterPassword = new SqlParameter("@Password", SqlDbType.NVarChar, 20);
             parameterPassword.Value = user.Password;
             myCommand.Parameters.Add(parameterPassword);
 
@@ -2889,7 +3462,7 @@ namespace AspNetForums.Data {
         public int TotalNumberOfUserAccounts(string usernameBeginsWith, string usernameToFind) {
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_GetTotalUsers", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetTotalUsers", myConnection);
 
             // Set the command type to stored procedure
             myCommand.CommandType = CommandType.StoredProcedure;
@@ -2917,10 +3490,9 @@ namespace AspNetForums.Data {
 
         /*********************************************************************************/
 
-        /************************ SEARCH FUNCTIONS ***********************
-                 * These functions are used to perform searching.
-                 * ***************************************************************/
-	
+
+
+
         /// <summary>
         /// Performs a search, returning a PostCollection object with appropriate posts.
         /// </summary>
@@ -2992,7 +3564,7 @@ namespace AspNetForums.Data {
 			
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_GetSearchResults", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetSearchResults", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
@@ -3005,7 +3577,7 @@ namespace AspNetForums.Data {
             parameterRecsPerPage.Value = RecsPerPage;
             myCommand.Parameters.Add(parameterRecsPerPage);
 
-            SqlParameter parameterSearchTerms = new SqlParameter("@SearchTerms", SqlDbType.VarChar, 500);
+            SqlParameter parameterSearchTerms = new SqlParameter("@SearchTerms", SqlDbType.NVarChar, 500);
             parameterSearchTerms.Value = strWhereClause;
             myCommand.Parameters.Add(parameterSearchTerms);
             
@@ -3045,6 +3617,7 @@ namespace AspNetForums.Data {
 
 
 
+
         /*********************************************************************************/
 
         /********************* MODERATION FUNCTIONS *********************
@@ -3067,7 +3640,7 @@ namespace AspNetForums.Data {
 
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_UserHasPostsAwaitingModeration", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_UserHasPostsAwaitingModeration", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
@@ -3101,13 +3674,13 @@ namespace AspNetForums.Data {
             // return all of the forums and their total and daily posts
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_GetModeratedPosts", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetModeratedPosts", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
 
             // Add Parameters to SPROC
-            SqlParameter parameterUsername = new SqlParameter("@UserName", SqlDbType.VarChar, 50);
+            SqlParameter parameterUsername = new SqlParameter("@UserName", SqlDbType.NVarChar, 50);
             parameterUsername.Value = Username;
             myCommand.Parameters.Add(parameterUsername);
 
@@ -3144,7 +3717,7 @@ namespace AspNetForums.Data {
         public bool ApprovePost(int postID, string approvedBy, string updateUserAsTrusted) {
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_ApproveModeratedPost", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_ApproveModeratedPost", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
@@ -3163,7 +3736,7 @@ namespace AspNetForums.Data {
             int iResult = Convert.ToInt32(myCommand.ExecuteScalar().ToString());
             myConnection.Close();
 
-            return iResult == 1;		// was the post previously approved?
+            return iResult == 1;        // was the post previously approved?
         }
 
 
@@ -3180,7 +3753,7 @@ namespace AspNetForums.Data {
         public  bool DeleteModeratedPost(int postID, string approvedBy) {
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_DeleteNonApprovedPost", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_DeleteNonApprovedPost", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
@@ -3194,7 +3767,7 @@ namespace AspNetForums.Data {
             int iRowsAffectedCount = Convert.ToInt32(myCommand.ExecuteScalar().ToString());
             myConnection.Close();
             
-            return iRowsAffectedCount != 0;		
+            return iRowsAffectedCount != 0;     
         }
 
 
@@ -3207,19 +3780,19 @@ namespace AspNetForums.Data {
             // return all of the forums and their total and daily posts
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_CanModerate", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_CanModerate", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
 
             // Add Parameters to SPROC
-            SqlParameter parameterUsername = new SqlParameter("@UserName", SqlDbType.VarChar, 50);
+            SqlParameter parameterUsername = new SqlParameter("@UserName", SqlDbType.NVarChar, 50);
             parameterUsername.Value = Username;
             myCommand.Parameters.Add(parameterUsername);
 
             // Execute the command
             myConnection.Open();
-            SqlDataReader dr = myCommand.ExecuteReader(CommandBehavior.CloseConnection);
+            SqlDataReader dr = myCommand.ExecuteReader();
             if (!dr.Read())
                 throw new Components.UserNotFoundException("User not found for Username " + Username);
             
@@ -3241,18 +3814,18 @@ namespace AspNetForums.Data {
             // return all of the forums and their total and daily posts
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_CanModerateForum", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_CanModerateForum", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
 
             // Add Parameters to SPROC
-            myCommand.Parameters.Add("@Username", SqlDbType.VarChar, 50).Value = username;
+            myCommand.Parameters.Add("@Username", SqlDbType.NVarChar, 50).Value = username;
             myCommand.Parameters.Add("@ForumID", SqlDbType.Int).Value = forumID;
 
             // Execute the command
             myConnection.Open();
-            SqlDataReader dr = myCommand.ExecuteReader(CommandBehavior.CloseConnection);
+            SqlDataReader dr = myCommand.ExecuteReader();
             if (!dr.Read())
                 throw new Components.UserNotFoundException("User not found for Username " + username);
             
@@ -3276,7 +3849,7 @@ namespace AspNetForums.Data {
         public  bool CanEditPost(String Username, int PostID) {
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_CanEditPost", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_CanEditPost", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
@@ -3286,7 +3859,7 @@ namespace AspNetForums.Data {
             parameterPostID.Value = PostID;
             myCommand.Parameters.Add(parameterPostID);
 
-            SqlParameter parameterUsername = new SqlParameter("@Username", SqlDbType.VarChar, 50);
+            SqlParameter parameterUsername = new SqlParameter("@Username", SqlDbType.NVarChar, 50);
             parameterUsername.Value = Username;
             myCommand.Parameters.Add(parameterUsername);
 
@@ -3317,7 +3890,7 @@ namespace AspNetForums.Data {
             // moves a post to a specified forum
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_MovePost", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_MovePost", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
@@ -3336,10 +3909,10 @@ namespace AspNetForums.Data {
             switch (iStatus) {
                 case 0:
                     return MovedPostStatus.NotMoved;
-					
+                    
                 case 1:
                     return MovedPostStatus.MovedButNotApproved;
-					
+                    
                 default:
                     return MovedPostStatus.MovedAndApproved;
             }
@@ -3365,7 +3938,7 @@ namespace AspNetForums.Data {
         /// the specified thread.</returns>
         public  UserCollection GetEmailList(int PostID) {
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_GetTrackingEmailsForThread", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetTrackingEmailsForThread", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
@@ -3375,7 +3948,7 @@ namespace AspNetForums.Data {
             parameterPostId.Value = PostID;
             myCommand.Parameters.Add(parameterPostId);
 
-	
+    
             // Execute the command
             myConnection.Open();
             SqlDataReader dr = myCommand.ExecuteReader();
@@ -3403,9 +3976,11 @@ namespace AspNetForums.Data {
         /// <remarks>If the passed in EmailTemplateID does not match to a database entry, a
         /// EmailTemplateNotFoundException exception is thrown.</remarks>
         public EmailTemplate GetEmailTemplateInfo(int EmailTemplateID) {
+            EmailTemplate template;
+
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_GetEmailInfo", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetEmailInfo", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
@@ -3417,11 +3992,15 @@ namespace AspNetForums.Data {
 
             // Execute the command
             myConnection.Open();
-            SqlDataReader dr = myCommand.ExecuteReader(CommandBehavior.CloseConnection);
+            SqlDataReader dr = myCommand.ExecuteReader();
             if (!dr.Read())
                 throw new Components.EmailTemplateNotFoundException("Email template not found for EmailTemplateID " + EmailTemplateID.ToString());
-			
-            return  PopulateEmailTemplateFromSqlDataReader(dr);
+            
+            template = PopulateEmailTemplateFromSqlDataReader(dr);
+
+            myConnection.Close();
+
+            return template;
         }
 
 
@@ -3433,10 +4012,10 @@ namespace AspNetForums.Data {
         /// Email Templates.</returns>
         public  EmailTemplateCollection GetEmailTemplateList() {
             // Get the username from the approved Post
-			
+            
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_GetEmailList", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetEmailList", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
@@ -3465,7 +4044,7 @@ namespace AspNetForums.Data {
         /// the updated Subject and Message values for the Email Template.</param>
         public void UpdateEmailTemplate(EmailTemplate email) {
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_UpdateEmailTemplate", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_UpdateEmailTemplate", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
@@ -3475,11 +4054,11 @@ namespace AspNetForums.Data {
             parameterEmailId.Value = email.EmailTemplateID;
             myCommand.Parameters.Add(parameterEmailId);
 
-            SqlParameter parameterSubject = new SqlParameter("@Subject", SqlDbType.VarChar, 50);
+            SqlParameter parameterSubject = new SqlParameter("@Subject", SqlDbType.NVarChar, 50);
             parameterSubject.Value = email.Subject;
             myCommand.Parameters.Add(parameterSubject);
 
-            SqlParameter parameterMessage = new SqlParameter("@Message", SqlDbType.Text);
+            SqlParameter parameterMessage = new SqlParameter("@Message", SqlDbType.NText);
             parameterMessage.Value = email.Body;
             myCommand.Parameters.Add(parameterMessage);
 
@@ -3509,13 +4088,13 @@ namespace AspNetForums.Data {
         public  ModeratedForumCollection GetForumsModeratedByUser(String Username) {
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_GetForumsModeratedByUser", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetForumsModeratedByUser", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
 
             // Add Parameters to SPROC
-            SqlParameter parameterUsername = new SqlParameter("@UserName", SqlDbType.VarChar, 50);
+            SqlParameter parameterUsername = new SqlParameter("@UserName", SqlDbType.NVarChar, 50);
             parameterUsername.Value = Username;
             myCommand.Parameters.Add(parameterUsername);
 
@@ -3548,16 +4127,16 @@ namespace AspNetForums.Data {
         /// viewing.</param>
         /// <returns>A ModeratedForumCollection containing the list of forums NOT moderated by
         /// the particular user.</returns>
-        public ModeratedForumCollection GetForumsNotModeratedByUser(String Username) {			
+        public ModeratedForumCollection GetForumsNotModeratedByUser(String Username) {          
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_GetForumsNotModeratedByUser", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetForumsNotModeratedByUser", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
 
             // Add Parameters to SPROC
-            SqlParameter parameterUsername = new SqlParameter("@UserName", SqlDbType.VarChar, 50);
+            SqlParameter parameterUsername = new SqlParameter("@UserName", SqlDbType.NVarChar, 50);
             parameterUsername.Value = Username;
             myCommand.Parameters.Add(parameterUsername);
 
@@ -3593,13 +4172,13 @@ namespace AspNetForums.Data {
         public void AddModeratedForumForUser(ModeratedForum forum) {
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_AddModeratedForumForUser", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_AddModeratedForumForUser", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
 
             // Add Parameters to SPROC
-            SqlParameter parameterUsername = new SqlParameter("@UserName", SqlDbType.VarChar, 50);
+            SqlParameter parameterUsername = new SqlParameter("@UserName", SqlDbType.NVarChar, 50);
             parameterUsername.Value = forum.Username;
             myCommand.Parameters.Add(parameterUsername);
 
@@ -3626,13 +4205,13 @@ namespace AspNetForums.Data {
         public  void RemoveModeratedForumForUser(ModeratedForum forum) {
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_RemoveModeratedForumForUser", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_RemoveModeratedForumForUser", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
 
             // Add Parameters to SPROC
-            SqlParameter parameterUsername = new SqlParameter("@UserName", SqlDbType.VarChar, 50);
+            SqlParameter parameterUsername = new SqlParameter("@UserName", SqlDbType.NVarChar, 50);
             parameterUsername.Value = forum.Username;
             myCommand.Parameters.Add(parameterUsername);
 
@@ -3657,7 +4236,7 @@ namespace AspNetForums.Data {
         public  UserCollection GetModeratorsInterestedInPost(int PostID) {
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_GetModeratorsForEmailNotification", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetModeratorsForEmailNotification", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
@@ -3685,7 +4264,7 @@ namespace AspNetForums.Data {
             return users;
         }
 
-	
+    
 
         /// <summary>
         /// Returns a list of the moderators of a particular forum.
@@ -3695,7 +4274,7 @@ namespace AspNetForums.Data {
         public  ModeratedForumCollection GetForumModerators(int ForumID) {
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_GetForumModerators", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetForumModerators", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
@@ -3735,7 +4314,7 @@ namespace AspNetForums.Data {
                  * This function is used to get Summary information about WebForums.NET
                  * *********************************************************/
 
-	
+    
         /// <summary>
         /// Returns a SummaryObject object with summary information about the message board.
         /// </summary>
@@ -3743,7 +4322,7 @@ namespace AspNetForums.Data {
         public Statistics GetSiteStatistics() {
             // Create Instance of Connection and Command Object
             SqlConnection myConnection = new SqlConnection(Globals.DatabaseConnectionString);
-            SqlCommand myCommand = new SqlCommand("sp_GetStatistics", myConnection);
+            SqlCommand myCommand = new SqlCommand("dbo.forums_GetStatistics", myConnection);
 
             // Mark the Command as a SPROC
             myCommand.CommandType = CommandType.StoredProcedure;
@@ -3752,7 +4331,7 @@ namespace AspNetForums.Data {
             myConnection.Open();
             SqlDataReader dr = myCommand.ExecuteReader();
 
-            Statistics statistics = new Statistics();			
+            Statistics statistics = new Statistics();           
 
             dr.Read();
 

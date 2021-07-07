@@ -32,8 +32,8 @@ namespace AspNetForums {
         /// <returns>A collection of threads</returns>
         // ***********************************************************************/
         public static ThreadCollection GetAllThreads(int forumID, int pageSize, int pageIndex, DateTime endDate, string username, bool unreadThreadsOnly) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             ThreadCollection threads;
 
@@ -53,6 +53,36 @@ namespace AspNetForums {
         }
 
         // *********************************************************************
+        //  GetNextThreadID
+        //
+        /// <summary>
+        /// Returns the id of the next thread.
+        /// </summary>
+        /// <param name="postID">Current threadid is determined from postsid</param>
+        // ***********************************************************************/
+        public static int GetNextThreadID(int postID) {
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
+
+            return dp.GetNextThreadID(postID);			
+        }
+
+        // *********************************************************************
+        //  GetPrevThreadID
+        //
+        /// <summary>
+        /// Returns the id of the previous thread.
+        /// </summary>
+        /// <param name="postID">Current threadid is determined from postsid</param>
+        // ***********************************************************************/
+        public static int GetPrevThreadID(int postID) {
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
+
+            return dp.GetPrevThreadID(postID);			
+        }
+
+        // *********************************************************************
         //  GetAllThreads
         //
         /// <summary>
@@ -64,8 +94,8 @@ namespace AspNetForums {
         /// <returns>A collection of threads</returns>
         // ***********************************************************************/
         public static ThreadCollection GetAllThreads(int forumID, string username, bool unreadThreadsOnly) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             return dp.GetAllThreads(forumID, username, unreadThreadsOnly);			
         }
@@ -82,8 +112,8 @@ namespace AspNetForums {
         /// <returns>Thread collection of threads</returns>
         // ***********************************************************************/
         public static ThreadCollection GetThreadsUserMostRecentlyParticipatedIn(string username) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             return dp.GetThreadsUserMostRecentlyParticipatedIn(username);
         }
@@ -98,8 +128,8 @@ namespace AspNetForums {
         /// <returns>Thread collection of threads being tracked</returns>
         // ***********************************************************************/
         public static ThreadCollection GetThreadsUserIsTracking(string username) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             return dp.GetThreadsUserIsTracking(username);
         }
@@ -125,8 +155,8 @@ namespace AspNetForums {
             } 
             else {
 
-                // Create Instance of the IWebForumsDataProviderBase
-                IWebForumsDataProviderBase dp = DataProvider.Instance();
+                // Create Instance of the IDataProviderBase
+                IDataProviderBase dp = DataProvider.Instance();
 
                 postCount = dp.GetTotalPostsForThread(postID);
 

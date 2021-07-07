@@ -8,6 +8,7 @@
       <span class="normalTextSmallBold">Moderate Post: <Asp:Label runat="server" id="PostID" /> [</span>
       <asp:HyperLink runat="server" id="DeletePost" CssClass="menuTextLink">Delete Post</asp:HyperLink> |
       <asp:HyperLink runat="server" id="EditPost" CssClass="menuTextLink">Edit Post</asp:HyperLink> |
+      <asp:HyperLink runat="server" id="ModerationHistory" CssClass="menuTextLink">Moderation History</asp:HyperLink> | 
       <asp:HyperLink runat="server" id="MovePost" CssClass="menuTextLink">Move Post</asp:HyperLink>
 <%--
       <asp:LinkButton runat="server" id="TurnOffModeration" CssClass="menuTextLink">Unmoderate <asp:Label id="Username" runat="server"/></asp:LinkButton> |

@@ -35,14 +35,14 @@ namespace AspNetForums.Controls.Search {
         TextBox textToSearchFor;
         Panel searchResultsPanel;
 
-        const bool defaultAllowSearchAllForums = true;			            // the default choice on whether the user can search all forums or not
+        const bool defaultAllowSearchAllForums = true;                      // the default choice on whether the user can search all forums or not
         const bool defaultShowBody = true;
-        const String defaultSearchTitle = "Search";			                // the default title to show at the top of the search page
-        const int defaultContainingTextBoxMaxLength = 250;		            // the default max # of characters for the Containing textbox
-        const int defaultContainingTextBoxColumns = 50;		                // the default # of cols. in the Containing textbox
-        const String defaultSearchButtonText = " Search ";		            // the default text for the submit button
-        const int defaultMaxBodyLength = 500;					            // how many characters to show of a body, at most
-		
+        const String defaultSearchTitle = "Search";                         // the default title to show at the top of the search page
+        const int defaultContainingTextBoxMaxLength = 250;                  // the default max # of characters for the Containing textbox
+        const int defaultContainingTextBoxColumns = 50;                     // the default # of cols. in the Containing textbox
+        const String defaultSearchButtonText = " Search ";                  // the default text for the submit button
+        const int defaultMaxBodyLength = 500;                               // how many characters to show of a body, at most
+        
         const String defaultNoRecordsMessage = "No records were found matching your search query.";
         private readonly String defaultRFVErrorMessage = Globals.HtmlNewLine + "You must enter at least one search term to search on.";
 
@@ -83,8 +83,8 @@ namespace AspNetForums.Controls.Search {
             CreateSearchResultsPanel();
 
         }
-		
-		
+        
+        
         // *********************************************************************
         //  DataGrid_PageIndexChange
         //
@@ -96,8 +96,8 @@ namespace AspNetForums.Controls.Search {
         /// 
         // ********************************************************************/ 
         private void DataGrid_PageIndexChange(Object sender, DataGridPageChangedEventArgs e) {
-            searchResultsDataGrid.CurrentPageIndex = e.NewPageIndex;		// set the page index
-		    DisplaySearchResults();		// rebind the data
+            searchResultsDataGrid.CurrentPageIndex = e.NewPageIndex;        // set the page index
+            DisplaySearchResults();     // rebind the data
         }
 
         // *********************************************************************
@@ -154,7 +154,7 @@ namespace AspNetForums.Controls.Search {
             searchResultsDataGrid.AllowCustomPaging = true;
             searchResultsDataGrid.AllowPaging = true;
             searchResultsDataGrid.PageIndexChanged += new DataGridPageChangedEventHandler(DataGrid_PageIndexChange);
-			
+            
             // Set the pager style attributes
             searchResultsDataGrid.PagerStyle.CopyFrom(datagridPagerStyle);
             searchResultsDataGrid.PagerStyle.CssClass = "searchPager";
@@ -460,7 +460,7 @@ namespace AspNetForums.Controls.Search {
 
             // Add the "All Forums" option if the user is allowed to search all forums
             if (AllowSearchAllForums)
-                forumsToSearch.Items.Insert(0, new ListItem("All Forums", "-1"));
+                forumsToSearch.Items.Insert(0, new ListItem("All Forums", "0"));
 
             td.Controls.Add(forumsToSearch);
 
@@ -490,7 +490,7 @@ namespace AspNetForums.Controls.Search {
             matchingWords = new DropDownList();
             matchingWords.Items.Add(new ListItem("Match All Words", "0"));
             matchingWords.Items.Add(new ListItem("Match Any Words", "1"));
-            matchingWords.Items.Add(new ListItem("Match Exact Phrase", "2"));	
+            matchingWords.Items.Add(new ListItem("Match Exact Phrase", "2"));   
             td.Controls.Add(matchingWords);
 
             tr.Controls.Add(td);
@@ -584,7 +584,7 @@ namespace AspNetForums.Controls.Search {
             }
         }
 
-		
+        
         // *********************************************************************
         //  SearchButton_Click
         //
@@ -650,33 +650,31 @@ namespace AspNetForums.Controls.Search {
                     SearchWhat = SearchWhatEnum.SearchAllWords;
                     break;
             }
-				
+                
             // Clean up search text
             textToSearchFor.Text = textToSearchFor.Text.Replace("'","''");
 
             // Perform the Search
-             PostCollection posts = AspNetForums.Search.PerformSearch(ToSearch, SearchWhat,
+            PostCollection posts = AspNetForums.Search.PerformSearch(ToSearch, SearchWhat,
                 Convert.ToInt32(forumsToSearch.SelectedItem.Value),
                 textToSearchFor.Text, searchResultsDataGrid.CurrentPageIndex+1, searchResultsDataGrid.PageSize);
 
             // if the dataset is empty, show an appropriate message
             if (posts.Count == 0) {
-                ((Label) FindControl("lblNoResults")).Visible = true;				
+                ((Label) FindControl("lblNoResults")).Visible = true;               
                 ((Panel) FindControl("panelSearchResults")).Visible = false;
             }
-            else {	
+            else {  
                 // we have results, bind it to the DataGrid.
                 ((Panel) FindControl("panelSearchResults")).Visible = true;
                 ((Label) FindControl("lblNoResults")).Visible = false;
-			
-                // see if we have more records to show...
-                searchResultsDataGrid.VirtualItemCount = posts.TotalRecordCount;
-			
+            
+                searchResultsDataGrid.VirtualItemCount = ((searchResultsDataGrid.CurrentPageIndex + 1) * searchResultsDataGrid.PageSize) + posts.TotalRecordCount;
                 searchResultsDataGrid.DataSource = posts;
                 searchResultsDataGrid.DataBind();
-			
+            
                 // display how many results we got and what page we're viewing.
-                ((Label) FindControl("lblInformation")).Text = String.Format("{0:d}", posts.TotalRecordCount) + " matches found.  Viewing Page " + (searchResultsDataGrid.CurrentPageIndex+1) + " of " + searchResultsDataGrid.PageCount;
+                ((Label) FindControl("lblInformation")).Text = String.Format("Viewing Page " + (searchResultsDataGrid.CurrentPageIndex+1) + ".  More matches available? " + ((posts.TotalRecordCount == 0) ? "No" : "Yes"));
             }
         }
 
@@ -702,7 +700,7 @@ namespace AspNetForums.Controls.Search {
 
                 // add the "All Forums" option if the user is allowed to search all forums
                 if (AllowSearchAllForums)
-                    forumsToSearch.Items.Insert(0, new ListItem("All Forums", "-1"));
+                    forumsToSearch.Items.Insert(0, new ListItem("All Forums", "0"));
 
                 if (CheckForPassedInParameters())
                     DisplaySearchResults();
@@ -735,7 +733,7 @@ namespace AspNetForums.Controls.Search {
                     }
                 else
                     searchFor.Items[0].Selected = true;
-				
+                
                 if (Context.Request.Params["Forum"] != null)
                     try {
                         forumsToSearch.Items.FindByValue(Context.Request.Params["Forum"].ToString()).Selected = true;
@@ -755,7 +753,7 @@ namespace AspNetForums.Controls.Search {
                     }
                 else
                     resultsPerPage.Items[1].Selected = true;
-				
+                
                 if (Context.Request.Params["Matching"] != null)
                     try {
                         matchingWords.Items.FindByValue(Context.Request.Params["Matching"].ToString()).Selected = true;
@@ -765,15 +763,15 @@ namespace AspNetForums.Controls.Search {
                     }
                 else
                     matchingWords.Items[0].Selected = true;
-			
+            
                 // Set the Records per page
                 searchResultsDataGrid.CurrentPageIndex = 0;
                 searchResultsDataGrid.PageSize = Convert.ToInt32(resultsPerPage.SelectedItem.Value);
-			
+            
                 return true;
             }
-		
-            return false;		// no querystring values
+        
+            return false;       // no querystring values
         }
 
 

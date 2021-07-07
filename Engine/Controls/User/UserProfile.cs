@@ -50,7 +50,7 @@ namespace AspNetForums.Controls {
             try {
                 user = Users.GetUserInfo(username, false);
             }
-            catch (UserNotFoundException unf) {
+            catch (Exception) {
                 // user not found
                 HttpContext.Current.Response.Redirect(Globals.UrlMessage + Convert.ToInt32(Messages.UserDoesNotExist));
             }
@@ -67,7 +67,6 @@ namespace AspNetForums.Controls {
         // ***********************************************************************/
         override protected void InitializeSkin(Control skin) {
             int totalSitePosts = Posts.GetTotalPostCount();
-            PlaceHolder placeHolder;
             Label label;
             HyperLink link;
 
@@ -152,15 +151,15 @@ namespace AspNetForums.Controls {
             label = (Label) skin.FindControl("Signature");
             label.Text = Globals.FormatPostBody(user.Signature);
 
-            // Icon
-            if (user.HasIcon) {
+            // Avatar
+            if (user.HasAvatar) {
 
                 // Set visiblity to true
                 Control c = (Control) skin.FindControl("HasIcon");
                 c.Visible = true;
 
                 System.Web.UI.WebControls.Image img = (System.Web.UI.WebControls.Image) skin.FindControl("Icon");
-                img.ImageUrl = user.ImageUrl;
+                img.ImageUrl = user.AvatarUrl;
             }
 
             // Total Posts

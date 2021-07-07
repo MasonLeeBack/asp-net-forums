@@ -23,14 +23,9 @@ namespace AspNetForums.Controls {
     /// </summary>
     // ***********************************************************************/
     public class WhoIsOnline : SkinnedForumWebControl {
-        int minutesToCheckForUsersOnline = 15;
+        int minutesToCheckForUsersOnline = 30;
         bool displayColonForUserListing = true;
         string skinFilename = "Skin-WhoIsOnline.ascx";
-
-        TextBox username;
-        TextBox password;
-        Button loginButton;
-        CheckBox autoLogin;
 
         // *********************************************************************
         //  WhoIsOnline
@@ -68,7 +63,7 @@ namespace AspNetForums.Controls {
             // Find the users image
             img = (System.Web.UI.WebControls.Image) skin.FindControl("StatsImg");
             if (null != img)
-                img.ImageUrl = Globals.ApplicationVRoot + "/skins/" + base.SkinName + "/images/icon_stats.gif";
+                img.ImageUrl = Globals.ApplicationVRoot + "/Skins/" + base.SkinName + "/images/icon_stats.gif";
 
             // Find the Total Users
             label = (Label) skin.FindControl("TotalUsers");

@@ -12,7 +12,7 @@
         &nbsp;<asp:label id="PostTitle" runat="server"></asp:label>
       </th>
     </tr>
-    <span id="ReplyTo" runat="server" visible="false">
+    <div id="ReplyTo" runat="server" visible="false">
       <tr>
         <td class="forumRow">
           <table cellSpacing="1" cellPadding="3">
@@ -39,7 +39,7 @@
         <td class="forumAlternate">&nbsp;
         </td>
       </tr>
-    </span><span id="Preview" runat="server" visible="false">
+    </div><div id="Preview" runat="server" visible="false">
       <tr>
         <td class="forumRow">
           <table cellSpacing="1" cellPadding="3" width="75%" border="0">
@@ -65,7 +65,7 @@
           </table>
         </td>
       </tr>
-    </span><span id="Post" runat="server" visible="true">
+    </div><div id="Post" runat="server" visible="true">
       <tr>
         <td class="forumRow">
           <table cellSpacing="1" cellPadding="3">
@@ -76,9 +76,9 @@
             </tr>
             <span id="Edit" runat="server" visible="false">
               <tr>
-                <td vAlign="top" nowrap align="right"><span class="normalTextSmallBold">Editing Post As: </span></td>
-                <td vAlign="top" align="left" colSpan="2"><span class="normalTextSmall"><asp:label id="PostEditor" runat="server"></asp:label>
-                  </span></td>
+                <td vAlign="top" nowrap align="right">Editing Post As: </td>
+                <td vAlign="top" align="left" colSpan="2"><asp:label id="PostEditor" runat="server"></asp:label>
+                  </td>
               </tr>
             </span>
             <tr>
@@ -93,16 +93,16 @@
             </tr>
             <span id="EditNotes" runat="server" visible="false">
               <tr>
-                <td vAlign="top" nowrap align="right"><span class="normalTextSmallBold">Edit Notes: </span></td>
+                <td vAlign="top" nowrap align="right">Edit Notes: </td>
                 <td vAlign="top" align="left" colSpan="2"><asp:textbox id="EditNotesBody" runat="server" columns="90" TextMode="MultiLine" rows="5"></asp:textbox></td>
               </tr>
             </span>
             <span id="AllowPinnedPosts" runat="server" visible="false">
               <tr>
-                <td vAlign="center" align="right" width="91"><span class="normalTextSmallBold">Pinned Post: 
-          </span></td>
-                <td vAlign="top" align="left"><span class="normalTextSmall"><asp:dropdownlist id="PinnedPost" runat="server"></asp:dropdownlist>
-                  </span></td>
+                <td vAlign="center" align="right" width="91">Pinned Post: 
+</td>
+                <td vAlign="top" align="left"><asp:dropdownlist id="PinnedPost" runat="server"></asp:dropdownlist>
+                  </td>
               </tr>
             </span>
             <tr>
@@ -121,7 +121,7 @@
           </table>
         </td>
       </tr>
-    </span>
+    </div>
   </table>
 </p>
 <p>

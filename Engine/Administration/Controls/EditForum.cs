@@ -77,7 +77,6 @@ namespace AspNetForums.Controls.Admin {
             // add the list of users who moderate this forum
             moderatedForums.Mode = ModeratedForumMode.ViewForForum;
             moderatedForums.ForumID = ForumID;
-            moderatedForums.RebindData();
             panelModerators.Controls.Add(moderatedForums);
 
             // add the panel

@@ -32,9 +32,9 @@ namespace AspNetForums.Controls {
     /// </remarks>
     public class CreateEditPost : WebControl, INamingContainer {
 
-        ViewOptions postView = ViewOptions.Threaded;
         DropDownList pinnedPost;
         CheckBox allowNoReplies;
+        ViewOptions postView = ViewOptions.Threaded;
         User user;
 
         /*************** Property and Class contants ****************/
@@ -82,6 +82,13 @@ namespace AspNetForums.Controls {
                     this.Mode = CreateEditPostMode.NewPost;
                 }
 
+                // Do we have a redirect URL?
+                if (null != Context.Request.QueryString["RedirectURL"]) {
+                    RedirectURL = Context.Request.QueryString["RedirectURL"];
+                } else if (null != Context.Request.Form["RedirectURL"]) {
+                    RedirectURL = Context.Request.Form["RedirectURL"];
+                }
+
                 // If we don't have either a forum id or a post id we have an error
                 if ((this.ForumID < 0) && (this.PostID < 0)) {
                     Page.Response.Redirect(Globals.UrlMessage + Convert.ToInt32(Messages.PostDoesNotExist));
@@ -125,9 +132,9 @@ namespace AspNetForums.Controls {
 
             // Attempt to load the control. If this fails, we're done
             try {
-                postForm = Page.LoadControl(Globals.ApplicationVRoot + "/skins/" + Globals.Skin + "/Skins/Skin-Post.ascx");
+                postForm = Page.LoadControl(Globals.ApplicationVRoot + "/Skins/" + Globals.Skin + "/Skins/Skin-Post.ascx");
             }
-            catch (FileNotFoundException e) {
+            catch (FileNotFoundException) {
                 throw new Exception("The user control skins/Skins/Skin-Post.ascx was not found. Please ensure this file exists in your skins directory");
             }
 
@@ -155,7 +162,7 @@ namespace AspNetForums.Controls {
             // Read in information about the post we are replying to
             try {
                 post = Posts.GetPostDetails(PostID, Users.GetLoggedOnUser().Username);
-            } catch (PostNotFoundException postNotFound) {
+            } catch (PostNotFoundException) {
                 HttpContext.Current.Response.Redirect(Globals.UrlMessage + Convert.ToInt32(Messages.PostDoesNotExist));
                 HttpContext.Current.Response.End();
             }
@@ -191,7 +198,7 @@ namespace AspNetForums.Controls {
             // Get the post to edit
             try {
                 post = GetPostForEdit();
-            } catch (CannotEditPostException cannotEdit) {
+            } catch (CannotEditPostException) {
                 HttpContext.Current.Response.Redirect(Globals.UrlMessage + Convert.ToInt32(Messages.UnableToEditPost));
                 HttpContext.Current.Response.End();
             }
@@ -392,7 +399,6 @@ namespace AspNetForums.Controls {
         ************************************************************************/
         private void PostButton_Click (Object sender, EventArgs e) {
             Control form;
-            Post postRepliedTo;
 
             // Only proceed if the post is valid
             if (!Page.IsValid) 
@@ -473,7 +479,7 @@ namespace AspNetForums.Controls {
                     try {
                         newPost = Posts.AddPost(postToAdd);
                     }
-                    catch (PostDuplicateException postdup) {
+                    catch (PostDuplicateException) {
                         Context.Response.Redirect(Globals.UrlMessage + Convert.ToInt32(Messages.DuplicatePost) + "&ForumId=" + ForumID);
                         Context.Response.End();
                     }
@@ -490,12 +496,12 @@ namespace AspNetForums.Controls {
 
                         newPost = Posts.AddPost(postToAdd);
                     } 
-                    catch (Components.PostNotFoundException exp) {
+                    catch (Components.PostNotFoundException) {
                         // uh-oh, something is off... are we replying to a message that has been deleted?
                         Context.Response.Redirect(Globals.UrlMessage + Convert.ToInt32(Messages.ProblemPosting));
                         Context.Response.End();
                     }
-                    catch (PostDuplicateException postdup) {
+                    catch (PostDuplicateException) {
                         Context.Response.Redirect(Globals.UrlMessage + Convert.ToInt32(Messages.DuplicatePost) + "&PostId=" + PostID);
                         Context.Response.End();
                     }
@@ -509,7 +515,7 @@ namespace AspNetForums.Controls {
                     Posts.UpdatePost(postToAdd, editedBy);
 
                     // send the user back to from where they came
-                    Context.Response.Redirect(RedirectUrl);
+                    Context.Response.Redirect(RedirectURL);
                     Context.Response.End();
 
                     // exit from the event handler
@@ -546,12 +552,22 @@ namespace AspNetForums.Controls {
         /// <param name="sender"></param>
         /// <param name="e"></param>
         ************************************************************************/
-        private void CancelButton_Click(Object sender, EventArgs e) {
-            Post post = Posts.GetPost(PostID, null);
+		private void CancelButton_Click(Object sender, EventArgs e) {
+			string redirectUrl = null;
+			
+			if ( PostID > -1 ) {
+				Post post = Posts.GetPost(PostID, Context.User.Identity.Name);
+				redirectUrl = Globals.UrlShowPost + post.ThreadID + "#" + PostID;
 
-            Page.Response.Redirect(Globals.UrlShowPost + post.ThreadID + "#" + PostID);
-            Page.Response.End();
-        }
+			} else if ( ForumID > -1 ) {
+				redirectUrl = Globals.UrlShowForum + ForumID;
+			} else {
+				redirectUrl = Globals.UrlHome;
+			}
+			
+			Page.Response.Redirect(Globals.UrlHome);
+			Page.Response.End();
+		}
 
         /***********************************************************************
         // PreviewButton_Click
@@ -567,7 +583,6 @@ namespace AspNetForums.Controls {
             Control form;
             Label label;
             TextBox textbox;
-            Button button;
 
             // only do this stuff if the page is valid
             if (!Page.IsValid) 
@@ -651,8 +666,14 @@ namespace AspNetForums.Controls {
             // Read in information about the post we are replying to
             try {
                 post = Posts.GetPostDetails(PostID, Context.User.Identity.Name);
-            } catch (Components.PostNotFoundException postNotFound) {
+            } catch (Components.PostNotFoundException) {
                 HttpContext.Current.Response.Redirect(Globals.UrlMessage + Convert.ToInt32(Messages.PostDoesNotExist));
+                HttpContext.Current.Response.End();
+            }
+
+            // Don't allow replies to locked posts
+            if (post.IsLocked) {
+                HttpContext.Current.Response.Redirect(Globals.UrlShowPost + PostID);
                 HttpContext.Current.Response.End();
             }
 
@@ -732,7 +753,7 @@ namespace AspNetForums.Controls {
         /// When editing a post, specifies the Url to send the end user once the post has been
         /// updates or the user clicks the Cancel button.
         /// </summary>
-        public String RedirectUrl {
+        public String RedirectURL {
             get {
                 if (ViewState["redirectUrl"] == null) return _defaultRedirectUrl;
                 return (String) ViewState["redirectUrl"];

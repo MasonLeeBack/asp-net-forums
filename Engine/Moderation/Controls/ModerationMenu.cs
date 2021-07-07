@@ -30,6 +30,7 @@ namespace AspNetForums.Controls.Moderation {
         LinkButton approvePostAndReply;
         LinkButton approvePostAndEdit;
         LinkButton turnOffModerationForUser;
+        HyperLink moderationHistory;
         HyperLink movePost;
         HyperLink moderateThread;
         HyperLink deletePost;
@@ -99,6 +100,13 @@ namespace AspNetForums.Controls.Moderation {
             if (null != deletePost) {
                 // Go to the delete view
                 deletePost.NavigateUrl = Globals.UrlDeletePost + PostID + "&ReturnURL=" + Page.Server.UrlEncode(Page.Request.RawUrl);
+            }
+
+            // Moderation History
+            moderationHistory = (HyperLink) skin.FindControl("ModerationHistory");
+            if (null != moderationHistory) {
+                // Go to the delete view
+                moderationHistory.NavigateUrl = Globals.UrlModerationHistory + PostID + "&ReturnURL=" + Page.Server.UrlEncode(Page.Request.RawUrl);
             }
 
             // Move the post/thread

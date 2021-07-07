@@ -51,9 +51,48 @@ namespace AspNetForums.Controls {
 
             Forum forum = (Forum) container.DataItem;
 
-            forumDescription.Text = forum.Description;
+            forumDescription.Text = "<br>" + forum.Description;
         }
 
+        
+        // *********************************************************************
+        //  HandleDataBindingForSubForums
+        //
+        /// <summary>
+        /// DataBinding event for the sub forums
+        /// </summary>
+        /// 
+        // ********************************************************************/   
+        private void HandleDataBindingForSubForums(Object sender, EventArgs e) {
+            ForumCollection forums;
+            Forums f = new Forums();
+
+            PlaceHolder subForums = (PlaceHolder) sender;
+            RepeaterItem container = (RepeaterItem) subForums.NamingContainer;
+
+            Forum forum = (Forum) container.DataItem;
+
+            // Attempt to get the sub forums
+            if (ForumUser == null)
+                forums = f.GetChildForums(forum.ForumID, null, false);
+            else
+                forums = f.GetChildForums(forum.ForumID, ForumUser.Username, false);
+
+            // Do we have any sub forums?
+            if (forums.Count > 0) {
+                subForums.Controls.Add(new LiteralControl("<br><span class=\"normalTextSmallBold\">(sub-forums: "));
+
+                foreach (Forum subforum in forums) {
+                    HyperLink l = new HyperLink();
+                    l.Text = subforum.Name;
+                    l.NavigateUrl = Globals.UrlShowForum + subforum.ForumID;
+                    subForums.Controls.Add(l);
+                }
+
+                subForums.Controls.Add(new LiteralControl(")</span>"));
+            }
+        }
+        
         // *********************************************************************
         //  HandleDataBindingForTotalThreads
         //
@@ -74,7 +113,7 @@ namespace AspNetForums.Controls {
             Forum forum = (Forum) container.DataItem;
 
             if (forum.TotalThreads > 0)
-                label.Text = forum.TotalThreads.ToString();
+                label.Text = forum.TotalThreads.ToString("n0");
             else
                 label.Text = "-";
 
@@ -101,7 +140,7 @@ namespace AspNetForums.Controls {
             label.CssClass = "normalTextSmaller";
 
             if (forum.TotalPosts > 0)
-                label.Text = forum.TotalPosts.ToString();
+                label.Text = forum.TotalPosts.ToString("n0");
             else
                 label.Text = "-";
 
@@ -179,7 +218,7 @@ namespace AspNetForums.Controls {
             postedBy.NavigateUrl = Globals.UrlUserProfile + forum.MostRecentPostAuthor;
 
             // Link to new post
-            newPost.Text = "<img border=\"0\" src=\"" + Globals.ApplicationVRoot + "/skins/" + Globals.Skin + "/images/icon_mini_topic.gif\">";
+            newPost.Text = "<img border=\"0\" src=\"" + Globals.ApplicationVRoot + "/Skins/" + Globals.Skin + "/images/icon_mini_topic.gif\">";
             newPost.NavigateUrl = Globals.UrlShowPost + forum.MostRecentThreadId + "#" + forum.MostRecentPostId;
 
             label.Controls.Add(new LiteralControl("by "));
@@ -204,26 +243,26 @@ namespace AspNetForums.Controls {
             Forum forum = (Forum) container.DataItem;
 
             if (ForumUser == null) {
-                img.ImageUrl = Globals.ApplicationVRoot + "/skins/" + SiteStyle + "/images/forum_status.gif";
+                img.ImageUrl = Globals.ApplicationVRoot + "/Skins/" + SkinName + "/images/forum_status.gif";
             } else {
     
                 // Is this a private forum?
                 if (forum.IsPrivate) {
 
                     if (forum.LastUserActivity < forum.MostRecentPostDate) {
-                        img.ImageUrl = Globals.ApplicationVRoot + "/skins/" + SiteStyle + "/images/forum_private_newposts.gif";
+                        img.ImageUrl = Globals.ApplicationVRoot + "/Skins/" + SkinName + "/images/forum_private_newposts.gif";
                         img.AlternateText = "Private Forums - New Posts";
                     } else {
-                        img.ImageUrl = Globals.ApplicationVRoot + "/skins/" + SiteStyle + "/images/forum_private.gif";
+                        img.ImageUrl = Globals.ApplicationVRoot + "/Skins/" + SkinName + "/images/forum_private.gif";
                         img.AlternateText = "Private Forums";
                     }
                          
                 } else {
                     if (forum.LastUserActivity < forum.MostRecentPostDate) {
-                        img.ImageUrl = Globals.ApplicationVRoot + "/skins/" + SiteStyle + "/images/forum_status_new.gif";
+                        img.ImageUrl = Globals.ApplicationVRoot + "/Skins/" + SkinName + "/images/forum_status_new.gif";
                         img.AlternateText = "New Posts";
                     } else {
-                        img.ImageUrl = Globals.ApplicationVRoot + "/skins/" + SiteStyle + "/images/forum_status.gif";
+                        img.ImageUrl = Globals.ApplicationVRoot + "/Skins/" + SkinName + "/images/forum_status.gif";
                     }
                 }
             }
@@ -240,6 +279,7 @@ namespace AspNetForums.Controls {
         // ********************************************************************/   
         public virtual Control BeginBuildItemTemplate() {
 
+            PlaceHolder subForums = new PlaceHolder();
             Label label;
             PlaceHolder placeHolder = new PlaceHolder();
             TableCell td;
@@ -249,6 +289,7 @@ namespace AspNetForums.Controls {
             td = new TableCell();
             td.CssClass = "forumRow";
             td.HorizontalAlign = HorizontalAlign.Center;
+            td.VerticalAlign = VerticalAlign.Top;
             td.Width = 34;
             td.Wrap = false;
             Image img = new Image();
@@ -265,12 +306,14 @@ namespace AspNetForums.Controls {
             link.CssClass = "forumTitle";
             link.DataBinding += new System.EventHandler(HandleDataBindingForForumTitle);
 
+            // Description and sub forums
             Label forumDescription = new Label();
             forumDescription.CssClass = "normalTextSmall";
             forumDescription.DataBinding += new System.EventHandler(HandleDataBindingForForumDescription);
+            subForums.DataBinding += new System.EventHandler(HandleDataBindingForSubForums);
             td.Controls.Add(link);
-            td.Controls.Add(new LiteralControl("<BR>"));
             td.Controls.Add(forumDescription);
+            td.Controls.Add(subForums);
             tr.Controls.Add(td);
 
             // Column 3
@@ -361,7 +404,7 @@ namespace AspNetForums.Controls {
                     else
                         DataSource = f.GetForumsByForumGroupId(ForumGroupID, username);
                 }
-            } catch (Components.ForumNotFoundException fnf) {
+            } catch (Components.ForumNotFoundException) {
                 Page.Response.Redirect(Globals.UrlMessage + Convert.ToInt32(Messages.UnknownForum));
                 Page.Response.End();
             }
@@ -394,16 +437,16 @@ namespace AspNetForums.Controls {
             if (Page != null) {
 
                 // Set the file paths to where the templates should be found
-                pathToHeaderTemplate = Globals.ApplicationVRoot + "/Skins/" + SiteStyle + "/Templates/ForumRepeater-Header.ascx";
-                pathToItemTemplate = Globals.ApplicationVRoot + "/skins/" + SiteStyle + "/Templates/ForumRepeater-Item.ascx";
-                pathToAlternatingItemTemplate = Globals.ApplicationVRoot + "/skins/" + SiteStyle + "/Templates/ForumRepeater-AlternatingItem.ascx";
-                pathToFooterTemplate = Globals.ApplicationVRoot + "/skins/" + SiteStyle + "/Templates/ForumRepeater-Footer.ascx";
+                pathToHeaderTemplate = Globals.ApplicationVRoot + "/Skins/" + SkinName + "/Templates/ForumRepeater-Header.ascx";
+                pathToItemTemplate = Globals.ApplicationVRoot + "/Skins/" + SkinName + "/Templates/ForumRepeater-Item.ascx";
+                pathToAlternatingItemTemplate = Globals.ApplicationVRoot + "/Skins/" + SkinName + "/Templates/ForumRepeater-AlternatingItem.ascx";
+                pathToFooterTemplate = Globals.ApplicationVRoot + "/Skins/" + SkinName + "/Templates/ForumRepeater-Footer.ascx";
 
                 // Set the file paths to where the templates should be found
-                keyForHeaderTemplate = SiteStyle + "/Templates/ForumRepeater-Header.ascx";
-                keyForItemTemplate = SiteStyle + "/Templates/ForumRepeater-Item.ascx";
-                keyForAlternatingItemTemplate = SiteStyle + "/Templates/ForumRepeater-AlternatingItem.ascx";
-                keyForFooterTemplate = SiteStyle + "/Templates/ForumRepeater-Footer.ascx";
+                keyForHeaderTemplate = SkinName + "/Templates/ForumRepeater-Header.ascx";
+                keyForItemTemplate = SkinName + "/Templates/ForumRepeater-Item.ascx";
+                keyForAlternatingItemTemplate = SkinName + "/Templates/ForumRepeater-AlternatingItem.ascx";
+                keyForFooterTemplate = SkinName + "/Templates/ForumRepeater-Footer.ascx";
 
                 // Attempt to get the skinned header template
                 if (HeaderTemplate == null)

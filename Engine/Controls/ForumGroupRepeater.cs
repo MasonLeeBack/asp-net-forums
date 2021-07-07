@@ -209,14 +209,14 @@ namespace AspNetForums.Controls {
             if (Page != null) {
 
                 // Set the file paths to where the templates should be found
-                pathToHeaderTemplate = Globals.ApplicationVRoot + "/Skins/" + SiteStyle + "/Templates/ForumGroupRepeater-Header.ascx";
-                pathToItemTemplate = Globals.ApplicationVRoot + "/skins/" + SiteStyle + "/Templates/ForumGroupRepeater-Item.ascx";
-                pathToFooterTemplate = Globals.ApplicationVRoot + "/skins/" + SiteStyle + "/Templates/ForumGroupRepeater-Footer.ascx";
+                pathToHeaderTemplate = Globals.ApplicationVRoot + "/Skins/" + SkinName + "/Templates/ForumGroupRepeater-Header.ascx";
+                pathToItemTemplate = Globals.ApplicationVRoot + "/Skins/" + SkinName + "/Templates/ForumGroupRepeater-Item.ascx";
+                pathToFooterTemplate = Globals.ApplicationVRoot + "/Skins/" + SkinName + "/Templates/ForumGroupRepeater-Footer.ascx";
 
                 // Set the file paths to where the templates should be found
-                keyForHeaderTemplate = SiteStyle + "/Templates/ForumGroupRepeater-Header.ascx";
-                keyForItemTemplate = SiteStyle + "/Templates/ForumGroupRepeater-Item.ascx";
-                keyForFooterTemplate = SiteStyle + "/Templates/ForumGroupRepeater-Footer.ascx";
+                keyForHeaderTemplate = SkinName + "/Templates/ForumGroupRepeater-Header.ascx";
+                keyForItemTemplate = SkinName + "/Templates/ForumGroupRepeater-Item.ascx";
+                keyForFooterTemplate = SkinName + "/Templates/ForumGroupRepeater-Footer.ascx";
 
                 // Attempt to get the skinned header template
                 if (HeaderTemplate == null)
@@ -310,9 +310,6 @@ namespace AspNetForums.Controls {
                 forumGroups = newForumGroups;
 
             }
-
-            // Sort the forum groups
-            forumGroups.Sort();
 
             // Databind if we have values
             if (forumGroups.Count > 0) {

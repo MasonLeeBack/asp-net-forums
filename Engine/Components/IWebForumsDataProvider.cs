@@ -11,19 +11,19 @@ namespace AspNetForums.Components {
     /// The DataProvider class contains a single method, Instance(), which returns an instance of the
     /// user-specified data provider class.
     /// </summary>
-    /// <remarks>  The data provider class must inherit the IWebForumsDataProviderBase
+    /// <remarks>  The data provider class must inherit the IDataProviderBase
     /// interface.</remarks>
     public class DataProvider {
         /// <summary>
         /// Returns an instance of the user-specified data provider class.
         /// </summary>
         /// <returns>An instance of the user-specified data provider class.  This class must inherit the
-        /// IWebForumsDataProviderBase interface.</returns>
-        public static IWebForumsDataProviderBase Instance() {
+        /// IDataProviderBase interface.</returns>
+        public static IDataProviderBase Instance() {
             //use the cache because the reflection used later is expensive
             Cache cache = System.Web.HttpContext.Current.Cache;
 
-            if ( cache["IWebForumsDataProviderBase"] == null ) {
+            if ( cache["IDataProviderBase"] == null ) {
                 //get the assembly path and class name from web.config
                 String prefix = "";
                 NameValueCollection context = (NameValueCollection) ConfigurationSettings.GetConfig("AspNetForumsSettings");
@@ -36,34 +36,28 @@ namespace AspNetForums.Components {
                 String assemblyPath = context[prefix + "DataProviderAssemblyPath"];
                 String className = context[prefix + "DataProviderClassName"];
 
-                if (assemblyPath.Substring(0,1) == "/") {
+                // assemblyPath presented in virtual form, must convert to physical path
+                assemblyPath = HttpContext.Current.Server.MapPath(HttpContext.Current.Request.ApplicationPath + "/bin/" + assemblyPath);					
 
-                    // assemblyPath presented in virtual form, must convert to physical path
-                    assemblyPath = HttpContext.Current.Server.MapPath(assemblyPath);					
-
-                }
-
-				
                 // Uuse reflection to store the constructor of the class that implements IWebForumDataProvider
                 try {
-                    cache.Insert( "IWebForumsDataProviderBase", Assembly.LoadFrom( assemblyPath).GetType( className ).GetConstructor(new Type[0]), new CacheDependency( assemblyPath ) );
+                    cache.Insert( "IDataProviderBase", Assembly.LoadFrom( assemblyPath).GetType( className ).GetConstructor(new Type[0]), new CacheDependency( assemblyPath ) );
                 }
-                catch (Exception e) {
+                catch (Exception) {
 
                     // could not locate DLL file
                     HttpContext.Current.Response.Write("<b>ERROR:</b> Could not locate file: <code>" + assemblyPath + "</code> or could not locate class <code>" + className + "</code> in file.");
                     HttpContext.Current.Response.End();
                 }
             }
-            
-            return (IWebForumsDataProviderBase)(  ((ConstructorInfo)cache["IWebForumsDataProviderBase"]).Invoke(null) );
+            return (IDataProviderBase)(  ((ConstructorInfo)cache["IDataProviderBase"]).Invoke(null) );
         }
     }
 
 
 
 
-    public interface IWebForumsDataProviderBase {
+    public interface IDataProviderBase {
         /*************************** POST METHODS ******************************/
         PostCollection GetAllMessages(int ForumID, ViewOptions ForumView, int PagesBack);
         PostDetails GetPostDetails(int PostID, String Username);
@@ -71,20 +65,25 @@ namespace AspNetForums.Components {
         void ReverseThreadTracking(String Username, int PostID);
         PostCollection GetThread(int ThreadID);
         PostCollection GetThreadByPostID(int postID, string username);
-        PostCollection GetThreadByPostID(int postID, int currentPageIndex, int pageSize, int sortBy, int sortOrder, string username);		
+        PostCollection GetThreadByPostID(int postID, int currentPageIndex, int pageSize, int sortBy, int sortOrder, string username);
+        PostCollection GetTopNNewPosts(string username, int postCount);
+        PostCollection GetTopNPopularPosts(string username, int postCount, int days);
         Post AddPost(Post postToAdd, string username);
         void UpdatePost(Post post, string editedBy);
         void DeletePost(int postID, string approvedBy, string reason);
         int GetTotalPostCount();
         void MarkPostAsRead(int postID, string username);
+        bool IsUserTrackingThread(int threadID, string username);
         /***********************************************************************/
 
-        /*************************** TOPIC METHODS ******************************/
+        /*************************** Thread METHODS ******************************/
         ThreadCollection GetAllThreads(int forumID, string username, bool unreadThreadsOnly);
         ThreadCollection GetAllThreads(int forumID, int pageSize, int pageIndex, DateTime endDate, string username, bool unreadThreadsOnly);
         int GetTotalPostsForThread(int postID);
         ThreadCollection GetThreadsUserIsTracking(string username);
         ThreadCollection GetThreadsUserMostRecentlyParticipatedIn(string username);
+        int GetNextThreadID(int postID);
+        int GetPrevThreadID(int postID);
         /***********************************************************************/
 
         /*************************** FORUM MESSAGES ******************************/
@@ -100,7 +99,6 @@ namespace AspNetForums.Components {
         Forum GetForumInfo(int ForumID, string username);
         Forum GetForumInfoByPostID(int PostID);
         ForumCollection GetAllForums(bool showAllForums, string username);
-        ForumCollection GetAllButOneForum(int PostID);
         ForumCollection GetForumsByForumGroupId(int forumGroupId, string username);
         void AddForumGroup(string forumGroupName);
         void DeleteForum(int ForumID);
@@ -156,6 +154,7 @@ namespace AspNetForums.Components {
         int GetTotalUnModeratedThreadsInForum(int ForumID, DateTime maxDateTime, DateTime minDateTime, string username, bool unreadThreadsOnly);
         ModeratorCollection GetMostActiveModerators();
         ModerationAuditCollection GetModerationAuditSummary();
+        ModerationQueueStatus GetQueueStatus(int forumID, string username);
         /**********************************************************************/
 
 
@@ -178,7 +177,25 @@ namespace AspNetForums.Components {
 
         /********************* USER ROLES METHODS **********************/
         String[] GetUserRoles(string username);
+        void AddUserToRole(string username, string role);
+        void RemoveUserFromRole(string username, string role);
+
+        String[] GetForumRoles(int forumID);
+        void AddForumToRole(int forumID, string role);
+        void RemoveForumFromRole(int forumID, string role);
+
+        String[] GetAllRoles();
+        void CreateNewRole(string role, string description);
+        void DeleteRole(string role);
+        string GetRoleDescription(string role);
+        void UpdateRoleDescription(string role, string description);
         /**********************************************************************/
+
+        /************************** VOTE METHODS ***************************/
+        void Vote(int postID, string selection);
+        VoteResultCollection GetVoteResults(int postID);
+        /**********************************************************************/
+
 
         /************************** SUMMARY METHODS ***************************/
         Statistics GetSiteStatistics();

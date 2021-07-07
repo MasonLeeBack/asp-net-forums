@@ -1,7 +1,7 @@
 <VisualStudioProject>
-    <CSHARP>
+    <CSHARP LastOpenVersion = "7.10.3077" >
         <Build>
-            <Settings ReferencePath = "C:\fxdev\misc\rhoward\AspNetForums\AspNetForums\bin\" >
+            <Settings ReferencePath = "C:\fxdev\misc\rhoward\AspNetForums\AspNetForums\bin\;C:\DA\Projects\AspNetForums\" >
                 <Config
                     Name = "Debug"
                     EnableASPDebugging = "false"
@@ -40,7 +40,7 @@
             CopyProjectDestinationFolder = ""
             CopyProjectUncPath = ""
             CopyProjectOption = "0"
-            ProjectView = "ShowAllFiles"
+            ProjectView = "ProjectFiles"
             ProjectTrust = "0"
         />
     </CSHARP>

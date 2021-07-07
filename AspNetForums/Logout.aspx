@@ -5,11 +5,12 @@
 <script language="C#" runat="server">
 
 	public void Page_Load(Object sender, EventArgs e) {
-		// log the user out
-		FormsAuthentication.SignOut();
 		
 		// Nuke the roles cookie
 		UserRoles.SignOut();
+	
+		// log the user out
+		FormsAuthentication.SignOut();
 	}
 	
 </script>

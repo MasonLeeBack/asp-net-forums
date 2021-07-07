@@ -22,9 +22,6 @@
                   <P>
                     <AspNetForums:ForumGroupRepeater runat="server" ID="Forumgrouprepeater1" />
                   <P>
-<%--
-                    <AspNetForums:JumpDropDownList runat="server" ID="Jumpdropdownlist1" />
---%>
                   <AspNetForums:WhereAmI ShowHome="true" id="Whereami2" runat="server" />
                   <P>
                 </td>

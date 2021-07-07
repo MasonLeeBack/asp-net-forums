@@ -47,15 +47,15 @@ namespace AspNetForums.Controls.Admin {
 
             // Set the siteStyle for the page
             if (user != null)
-                siteStyle = user.SiteStyle;
+                siteStyle = user.Skin;
             else
-                siteStyle = Globals.SiteStyle;
+                siteStyle = Globals.Skin;
 
             // Attempt to load the control. If this fails, we're done
             try {
-                controlTemplate = Page.LoadControl(Globals.ApplicationVRoot + "/skins/" + Globals.Skin + "/Skins/Skin-AdminPickUser.ascx");
+                controlTemplate = Page.LoadControl(Globals.ApplicationVRoot + "/Skins/" + Globals.Skin + "/Skins/Skin-AdminPickUser.ascx");
             }
-            catch (FileNotFoundException e) {
+            catch (FileNotFoundException) {
                 throw new Exception("The user control skins/Skins/Skin-AdminPickUser.ascx was not found. Please ensure this file exists in your skins directory");
             }
 
@@ -101,7 +101,5 @@ namespace AspNetForums.Controls.Admin {
             userList.DataSource = users;
             DataBind();
         }
-
-
     }
 }

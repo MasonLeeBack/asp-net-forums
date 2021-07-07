@@ -117,13 +117,12 @@ namespace AspNetForums.Controls {
         // ********************************************************************/ 
         protected override void InitializeSkin(Control skin) {
             // Images
-            System.Web.UI.WebControls.Image img;
             HyperLink link;
 
             // Ensure we have a valid forum
             try {
                 forum = Forums.GetForumInfo(ForumID);
-            } catch (Components.ForumNotFoundException fnf) {
+            } catch (Components.ForumNotFoundException) {
                 Page.Response.Redirect(Globals.UrlMessage + Convert.ToInt32(Messages.UnknownForum));
                 Page.Response.End();
             }
@@ -200,7 +199,7 @@ namespace AspNetForums.Controls {
             // Find the new thread button(s)
             newThreadTop = (System.Web.UI.WebControls.Image) skin.FindControl("NewThreadImageTop");
             if (newThreadTop != null)
-                newThreadTop.ImageUrl = Globals.ApplicationVRoot + "/skins/" + SkinName + "/images/newtopic.gif";
+                newThreadTop.ImageUrl = Globals.ApplicationVRoot + "/Skins/" + SkinName + "/images/newtopic.gif";
 
             // Set the anchor
             link = (HyperLink) skin.FindControl("NewThreadLinkTop");
@@ -213,7 +212,6 @@ namespace AspNetForums.Controls {
 
             // Find the pager
             pager = (Paging) skin.FindControl("Pager");
-
             // Get the total records used in the pager
             if (ForumUser != null) {
                 if (!Page.IsPostBack)
@@ -223,7 +221,6 @@ namespace AspNetForums.Controls {
             } else {
                 pager.TotalRecords = Forums.GetTotalThreadsInForum(ForumID, threadMaxValue, CalculateDateTimeFilter(), null, false);
             }
-
 
         }
 
@@ -367,7 +364,7 @@ namespace AspNetForums.Controls {
         private void MarkAllRead_Click (Object sender, EventArgs e) {
             try {
                 Forums.MarkAllThreadsRead(ForumID, username);
-            } catch (Exception exp) {
+            } catch (Exception) {
                 ; // ignore
             }
 

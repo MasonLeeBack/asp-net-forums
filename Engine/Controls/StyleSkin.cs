@@ -20,12 +20,12 @@ namespace AspNetForums.Controls {
         public StyleSkin() {
 
             User user = null;
-            string styleName = Globals.SiteStyle;
+            string skinName = Globals.Skin;
 
             // Get the user if available we'll personalize the style
             if (HttpContext.Current.Request.IsAuthenticated) {
                 user = Users.GetUserInfo(HttpContext.Current.User.Identity.Name, true);
-                styleName = user.SiteStyle;
+                skinName = user.Skin;
             }
 
             if (DisplayTitle) {
@@ -37,7 +37,7 @@ namespace AspNetForums.Controls {
             }
 
             // Add the style sheet
-            base.Text += "    <link rel=\"stylesheet\" href=\"" + Globals.ApplicationVRoot + "/skins/" + styleName + "/style/default.css\" type=\"text/css\" />";
+            base.Text += "    <link rel=\"stylesheet\" href=\"" + Globals.ApplicationVRoot + "/Skins/" + skinName + "/style/default.css\" type=\"text/css\" />";
 
         }
 

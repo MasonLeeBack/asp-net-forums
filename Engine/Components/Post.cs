@@ -20,7 +20,6 @@ namespace AspNetForums.Components {
         int postLevel = 0;				// indicates the postlevel - i.e., how many replies deep the thread is
         int sortOrder = 0;				// indicates the order the thread is sorted
         int replies = 0;				// how many replies this posting has received
-        int messagesInThread = 0;       // Total messages in the Thread - used for paging in flatview
         int views = 0;                  // Total times the post has been viewed
 
         String username = "";			// uniquely identifies the user who posted the post
@@ -34,6 +33,7 @@ namespace AspNetForums.Components {
         bool approved = true;			// whether or not the post is approved
         bool islocked = false;          // whether or not the post allows replies
         bool hasRead = false;           // whether or not the post has been read by the user
+        Posts.PostType postType = Posts.PostType.Post;
 
         // *********************************************************************
         //
@@ -54,6 +54,15 @@ namespace AspNetForums.Components {
                     postID = 0;
                 else
                     postID = value;
+            }
+        }
+
+        public Posts.PostType PostType {
+            get {
+                return postType;
+            }
+            set {
+                postType = value;
             }
         }
 

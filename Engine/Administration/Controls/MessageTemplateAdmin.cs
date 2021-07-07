@@ -132,9 +132,9 @@ namespace AspNetForums.Controls.Admin {
 
             // Attempt to load the control. If this fails, we're done
             try {
-                controlTemplate = Page.LoadControl(Globals.ApplicationVRoot + "/skins/" + Globals.Skin + "/Skins/Skin-MessageAdmin.ascx");
+                controlTemplate = Page.LoadControl(Globals.ApplicationVRoot + "/Skins/" + Globals.Skin + "/Skins/Skin-MessageAdmin.ascx");
             }
-            catch (FileNotFoundException e) {
+            catch (FileNotFoundException) {
                 throw new Exception("The user control skins/Skins/Skin-MessageAdmin.ascx was not found. Please ensure this file exists in your skins directory");
             }
 

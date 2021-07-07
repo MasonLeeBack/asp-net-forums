@@ -77,7 +77,7 @@ namespace AspNetForums.Controls {
                     // Find the home image
                     image = (Image) skin.FindControl("HomeImage");
                     if (image != null)
-                        image.ImageUrl = Globals.ApplicationVRoot + "/skins/" + SkinName + "/images/title.gif";
+                        image.ImageUrl = Globals.ApplicationVRoot + "/Skins/" + SkinName + "/images/title.gif";
                 }
             } else {
                 link.Visible = false;
@@ -99,14 +99,14 @@ namespace AspNetForums.Controls {
             searchMenu.Visible = true;
             searchMenu.NavigateUrl = Globals.UrlSearch;
             if (UseIcons) {
-                searchMenu.Text = "<img src=\"" + Globals.ApplicationVRoot + "/skins/" + SkinName + "/images/icon_mini_search.gif" + "\" border=\"0\">";
+                searchMenu.Text = "<img src=\"" + Globals.ApplicationVRoot + "/Skins/" + SkinName + "/images/icon_mini_search.gif" + "\" border=\"0\">";
              }
             searchMenu.Text += MenuTextForSearch;
 
             // Is the user logged on?
             loginMenu.Visible = true;
             if (UseIcons) {
-                loginMenu.Text = "<img src=\"" + Globals.ApplicationVRoot + "/skins/" + SkinName + "/images/icon_mini_login.gif" + "\" border=\"0\">";
+                loginMenu.Text = "<img src=\"" + Globals.ApplicationVRoot + "/Skins/" + SkinName + "/images/icon_mini_login.gif" + "\" border=\"0\">";
             }
             if (Context.Request.IsAuthenticated) {
                 loginMenu.NavigateUrl = Globals.UrlLogout;
@@ -121,7 +121,7 @@ namespace AspNetForums.Controls {
                 profileMenu.Visible = true;
                 profileMenu.NavigateUrl = Globals.UrlEditUserProfile;
                 if (UseIcons) {
-                    profileMenu.Text = "<img src=\"" + Globals.ApplicationVRoot + "/skins/" + SkinName + "/images/icon_mini_profile.gif" + "\" border=\"0\">";
+                    profileMenu.Text = "<img src=\"" + Globals.ApplicationVRoot + "/Skins/" + SkinName + "/images/icon_mini_profile.gif" + "\" border=\"0\">";
                 }
                 profileMenu.Text += MenuTextForProfile;
             }
@@ -131,7 +131,7 @@ namespace AspNetForums.Controls {
                 myForumsMenu.Visible = true;
                 myForumsMenu.NavigateUrl = Globals.UrlMyForums;
                 if (UseIcons) {
-                    myForumsMenu.Text = "<img src=\"" + Globals.ApplicationVRoot + "/skins/" + SkinName + "/images/icon_mini_myforums.gif" + "\" border=\"0\">";
+                    myForumsMenu.Text = "<img src=\"" + Globals.ApplicationVRoot + "/Skins/" + SkinName + "/images/icon_mini_myforums.gif" + "\" border=\"0\">";
                 }
                 myForumsMenu.Text += MenuTextForMyForums;
             }
@@ -141,7 +141,7 @@ namespace AspNetForums.Controls {
                 registerMenu.Visible = true;
                 registerMenu.NavigateUrl = Globals.UrlRegister;
                 if (UseIcons) {
-                    registerMenu.Text = "<img src=\"" + Globals.ApplicationVRoot + "/skins/" + SkinName + "/images/icon_mini_register.gif" + "\" border=\"0\">";
+                    registerMenu.Text = "<img src=\"" + Globals.ApplicationVRoot + "/Skins/" + SkinName + "/images/icon_mini_register.gif" + "\" border=\"0\">";
                 }
                 registerMenu.Text += MenuTextForRegister;
             }
@@ -150,7 +150,7 @@ namespace AspNetForums.Controls {
             homeMenu.Visible = true;
             homeMenu.NavigateUrl = Globals.UrlHome;
             if (UseIcons) {
-                homeMenu.Text = "<img src=\"" + Globals.ApplicationVRoot + "/skins/" + SkinName + "/images/icon_mini_home.gif" + "\" border=\"0\">";
+                homeMenu.Text = "<img src=\"" + Globals.ApplicationVRoot + "/Skins/" + SkinName + "/images/icon_mini_home.gif" + "\" border=\"0\">";
             }
             homeMenu.Text += MenuTextForHome;
 
@@ -159,7 +159,7 @@ namespace AspNetForums.Controls {
             memberListMenu.Visible = true;
             memberListMenu.NavigateUrl = Globals.UrlShowAllUsers;
             if (UseIcons) {
-                memberListMenu.Text = "<img src=\"" + Globals.ApplicationVRoot + "/skins/" + SkinName + "/images/icon_mini_memberlist.gif" + "\" border=\"0\">";
+                memberListMenu.Text = "<img src=\"" + Globals.ApplicationVRoot + "/Skins/" + SkinName + "/images/icon_mini_memberlist.gif" + "\" border=\"0\">";
             }
             memberListMenu.Text += MenuTextForMembers;
 
@@ -168,7 +168,7 @@ namespace AspNetForums.Controls {
                 moderationMenu.Visible = true;
 
                 if (UseIcons) {
-                    moderationMenu.Text = "<img src=\"" + Globals.ApplicationVRoot + "/skins/" + SkinName + "/images/icon_mini_moderate.gif" + "\" border=\"0\">";
+                    moderationMenu.Text = "<img src=\"" + Globals.ApplicationVRoot + "/Skins/" + SkinName + "/images/icon_mini_moderate.gif" + "\" border=\"0\">";
                 }
 
                 // Moderation details
@@ -180,8 +180,12 @@ namespace AspNetForums.Controls {
             if ((null != ForumUser) && (ForumUser.IsAdministrator)) {
                 adminMenu.Visible = true;
 
+                if (UseIcons) {
+                    adminMenu.Text = "<img src=\"" + Globals.ApplicationVRoot + "/Skins/" + SkinName + "/images/icon_mini_admin.gif" + "\" border=\"0\">";
+                }
+
                 // Admin
-                adminMenu.Text = MenuTextForAdmin;
+                adminMenu.Text += MenuTextForAdmin;
                 adminMenu.NavigateUrl = Globals.UrlAdmin;
             }
         }

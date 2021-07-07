@@ -27,8 +27,8 @@ namespace AspNetForums {
         /// pass a value of 1 as the Page parameter.</remarks>
         public static PostCollection PerformSearch(ToSearchEnum ToSearch, SearchWhatEnum SearchWhat,
             int ForumToSearch, String SearchTerms, int Page, int RecsPerPage) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             // ensure that Page > 0 and RecsPerPage > 0
             if (RecsPerPage <= 0) RecsPerPage = 10;

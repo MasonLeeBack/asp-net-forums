@@ -41,8 +41,8 @@
                  <table width="100%" cellpadding="3" cellspacing="0">
                    <tr> 
                      <td class="forumRow">
-                       <span class="normalTextSmallBold">Subject: </span><a class="linkSmallBold"><%# DataBinder.Eval(Container.DataItem, "Subject") %></a>
-                       <br><span class="normalTextSmallBold">Posted By: </span><a class="linkSmallBold" href=""><%# DataBinder.Eval(Container.DataItem, "Username") %></a>
+                       <span class="normalTextSmallBold">Subject: </span><a target="_new" href='<%# Globals.UrlShowPost + DataBinder.Eval(Container.DataItem, "PostID") %>' class="linkSmallBold"><%# DataBinder.Eval(Container.DataItem, "Subject") %></a>
+                       <br><span class="normalTextSmallBold">Posted By: </span><a class="linkSmallBold" href='<%# Globals.UrlUserProfile + DataBinder.Eval(Container.DataItem, "Username")%>'><%# DataBinder.Eval(Container.DataItem, "Username") %></a>
                      </td>
                    </tr>
                    <tr> 

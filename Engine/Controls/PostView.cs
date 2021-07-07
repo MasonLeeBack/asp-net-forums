@@ -40,12 +40,11 @@ namespace AspNetForums.Controls {
         string defaultPostDateTimeFormat = "MMM d, yyyy - h:mm tt";
         int threshHold = 3;
         Control controlTemplate;
-        string siteStyle;
+        string skinName;
         User user;
         DropDownList displayMode;
         DropDownList sortOrder;
         string templateName = "Skin-ShowPostList.ascx";
-        ModerationMenu moderationMenu;
         CheckBox emailTracking;
 
         // *********************************************************************
@@ -76,7 +75,7 @@ namespace AspNetForums.Controls {
                     } else if (null != Context.Request.Form["PostId"]) {
                         this.PostID = Convert.ToInt32(Context.Request.Form["PostID"]);
                     }
-                } catch (Exception e) {
+                } catch (Exception) {
                     HttpContext.Current.Response.Redirect(Globals.UrlMessage + Convert.ToInt32(Messages.PostDoesNotExist));
                     HttpContext.Current.Response.End();
                 }
@@ -95,7 +94,7 @@ namespace AspNetForums.Controls {
             // Populate get details about the forum we are in
             try {
                 forum = Forums.GetForumInfoByPostID(PostID);
-            } catch (Components.ForumNotFoundException fnf) {
+            } catch (Components.ForumNotFoundException) {
                 HttpContext.Current.Response.Redirect(Globals.UrlMessage + Convert.ToInt32(Messages.UnknownForum));
                 HttpContext.Current.Response.End();
             }
@@ -121,9 +120,9 @@ namespace AspNetForums.Controls {
 
             // Set the siteStyle for the page
             if (user != null)
-                siteStyle = user.SiteStyle;
+                skinName = user.Skin;
             else
-                siteStyle = Globals.SiteStyle;
+                skinName = Globals.Skin;
 
             // Set the view mode
             SetViewMode();
@@ -147,8 +146,8 @@ namespace AspNetForums.Controls {
 
                 // Attempt to load the control. If this fails, we're done
                 try {
-                    controlTemplate = Page.LoadControl(Globals.ApplicationVRoot + "/skins/" + Globals.Skin + "/Skins/Skin-ShowPostThreaded.ascx");
-                } catch (FileNotFoundException e) {
+                    controlTemplate = Page.LoadControl(Globals.ApplicationVRoot + "/Skins/" + Globals.Skin + "/Skins/Skin-ShowPostThreaded.ascx");
+                } catch (FileNotFoundException) {
                     throw new Exception("The user control skins/Skins/Skin-ShowPostThreaded.ascx was not found. Please ensure this file exists in your skins directory");
                 }
 
@@ -158,8 +157,8 @@ namespace AspNetForums.Controls {
             } else {
 
                 try {
-                    controlTemplate = Page.LoadControl(Globals.ApplicationVRoot + "/skins/" + Globals.Skin + "/Skins/" + TemplateName);
-                } catch (FileNotFoundException e) {
+                    controlTemplate = Page.LoadControl(Globals.ApplicationVRoot + "/Skins/" + Globals.Skin + "/Skins/" + TemplateName);
+                } catch (FileNotFoundException) {
                     throw new Exception("The user control skins/Skins/" + TemplateName + "was not found. Please ensure this file exists in your skins directory");
                 }
 
@@ -224,10 +223,9 @@ namespace AspNetForums.Controls {
             if ((user != null) && (emailTracking != null)) {
                 emailTracking.Visible = true;
 
-                PostDetails postDetails = Posts.GetPostDetails(PostID, user.Username);
                 emailTracking.AutoPostBack = true;
                 emailTracking.CheckedChanged += new System.EventHandler(Toggle_ThreadTracking);
-                emailTracking.Checked = postDetails.ThreadTracking;
+                emailTracking.Checked = Posts.IsUserTrackingThread(PostID, user.Username);
             } else {
                 emailTracking.Visible = false;
             }
@@ -241,7 +239,7 @@ namespace AspNetForums.Controls {
         // Find the new thread iamge
         newThreadImage = (System.Web.UI.WebControls.Image) controlTemplate.FindControl("NewThreadImageTop");
         if (newThreadImage != null) {
-        newThreadImage.ImageUrl = Globals.ApplicationVRoot + "/skins/" + siteStyle + "/images/newthread.gif";
+        newThreadImage.ImageUrl = Globals.ApplicationVRoot + "/Skins/" + skinName + "/images/newthread.gif";
 
     } else {
                     newThreadLink.Text = " New Thread ";
@@ -284,6 +282,9 @@ namespace AspNetForums.Controls {
             // Get the total records used in the pager
             pager.TotalRecords = Threads.GetTotalPostsForThread(PostID);
 
+            // Set up the email tracking check changed event
+            postList.ThreadTracking_Changed += new System.EventHandler(Toggle_ThreadTracking);
+
             // Set the datasource
             // If we're in a post back someone else probably wants to render the view
             // Set the datasource
@@ -293,6 +294,7 @@ namespace AspNetForums.Controls {
             } else {
                 postList.DataSource = Posts.GetThreadByPostID(PostID, pager.PageIndex, pager.PageSize, 0, Convert.ToInt32(sortOrder.SelectedItem.Value));
             }
+            postList.DataBind();
 
         }
 
@@ -340,7 +342,7 @@ namespace AspNetForums.Controls {
         /// </summary>
         /// 
         // ********************************************************************/
-        private void Toggle_ThreadTracking(Object sender, EventArgs e) {
+        public void Toggle_ThreadTracking(Object sender, EventArgs e) {
             Posts.ReverseThreadTrackingOptions(user.Username, PostID);
         }
 
@@ -356,6 +358,7 @@ namespace AspNetForums.Controls {
 
             // Set the datasource
             postList.DataSource = Posts.GetThreadByPostID(PostID, pager.PageIndex, pager.PageSize, 0, Convert.ToInt32(sortOrder.SelectedItem.Value));
+            postList.DataBind();
 
         }
 
@@ -368,7 +371,7 @@ namespace AspNetForums.Controls {
         /// 
         // ********************************************************************/ 
         protected override void OnPreRender(EventArgs e) {
-            DataBind();
+//            DataBind();
         }
 
         /// <summary>

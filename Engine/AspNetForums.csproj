@@ -1,8 +1,8 @@
 <VisualStudioProject>
     <CSHARP
         ProjectType = "Local"
-        ProductVersion = "7.0.9466"
-        SchemaVersion = "1.0"
+        ProductVersion = "7.10.3077"
+        SchemaVersion = "2.0"
         ProjectGuid = "{E663538D-8A0A-4CE8-8232-2576D4DC2B0D}"
     >
         <Build>
@@ -16,7 +16,10 @@
                 DefaultTargetSchema = "IE50"
                 DelaySign = "false"
                 OutputType = "Library"
+                PreBuildEvent = ""
+                PostBuildEvent = ""
                 RootNamespace = "AspNetForums"
+                RunPostBuildEvent = "OnBuildSuccess"
                 StartupObject = ""
             >
                 <Config
@@ -30,6 +33,8 @@
                     DebugSymbols = "true"
                     FileAlignment = "4096"
                     IncrementalBuild = "true"
+                    NoStdLib = "false"
+                    NoWarn = ""
                     Optimize = "false"
                     OutputPath = "..\AspNetForums\bin\"
                     RegisterForComInterop = "false"
@@ -48,6 +53,8 @@
                     DebugSymbols = "false"
                     FileAlignment = "4096"
                     IncrementalBuild = "true"
+                    NoStdLib = "false"
+                    NoWarn = ""
                     Optimize = "true"
                     OutputPath = "..\AspNetForums\bin\"
                     RegisterForComInterop = "false"
@@ -66,6 +73,8 @@
                     DebugSymbols = "true"
                     FileAlignment = "4096"
                     IncrementalBuild = "true"
+                    NoStdLib = "false"
+                    NoWarn = ""
                     Optimize = "false"
                     OutputPath = "..\AspNetForums\bin\"
                     RegisterForComInterop = "false"
@@ -84,8 +93,10 @@
                     DebugSymbols = "true"
                     FileAlignment = "4096"
                     IncrementalBuild = "true"
+                    NoStdLib = "false"
+                    NoWarn = ""
                     Optimize = "false"
-                    OutputPath = "..\..\..\..\..\AspNetForums\AspNetForums\bin\"
+                    OutputPath = "..\..\WebSite\AspNetWeb\bin\"
                     RegisterForComInterop = "false"
                     RemoveIntegerChecks = "false"
                     TreatWarningsAsErrors = "false"
@@ -121,6 +132,16 @@
                     Name = "System.Windows.Forms"
                     AssemblyName = "System.Windows.Forms"
                     HintPath = "..\..\..\..\..\WINDOWS\Microsoft.NET\Framework\v1.0.3705\System.Windows.Forms.dll"
+                />
+                <Reference
+                    Name = "System.Web.Services"
+                    AssemblyName = "System.Web.Services"
+                    HintPath = "..\..\..\..\..\..\WINDOWS\Microsoft.NET\Framework\v1.0.3705\System.Web.Services.dll"
+                />
+                <Reference
+                    Name = "Npgsql"
+                    AssemblyName = "Npgsql"
+                    HintPath = "C:\Documents and Settings\jhill\My Documents\Download\Npgsql-0.6-bin\NpgsqlBinaries0.6\ms\Npgsql.dll"
                 />
             </References>
         </Build>
@@ -177,12 +198,12 @@
                     BuildAction = "Compile"
                 />
                 <File
-                    RelPath = "Administration\Controls\AdminForumPostListing.cs"
+                    RelPath = "Votes.cs"
                     SubType = "Code"
                     BuildAction = "Compile"
                 />
                 <File
-                    RelPath = "Administration\Controls\AdminPickUser.cs"
+                    RelPath = "Administration\Controls\AdminForumPostListing.cs"
                     SubType = "Code"
                     BuildAction = "Compile"
                 />
@@ -193,6 +214,11 @@
                 />
                 <File
                     RelPath = "Administration\Controls\CreateEditForumGroup.cs"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "Administration\Controls\CreateEditRole.cs"
                     SubType = "Code"
                     BuildAction = "Compile"
                 />
@@ -327,9 +353,29 @@
                     BuildAction = "Compile"
                 />
                 <File
-                    RelPath = "Controls\CreateEditPost.cs"
+                    RelPath = "Components\VoteDetails.cs"
                     SubType = "Code"
                     BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "Components\VoteResult.cs"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "Components\VoteResultCollection.cs"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "Controls\CreateEditPost.cs"
+                    SubType = "Component"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "Controls\CreateEditPost.resx"
+                    DependentUpon = "CreateEditPost.cs"
+                    BuildAction = "EmbeddedResource"
                 />
                 <File
                     RelPath = "Controls\ForumGroupRepeater.cs"
@@ -467,6 +513,16 @@
                     BuildAction = "Compile"
                 />
                 <File
+                    RelPath = "Controls\Specialized\ProgressBar.cs"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "Controls\Specialized\Vote.cs"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+                <File
                     RelPath = "Controls\User\CreateUser.cs"
                     SubType = "Code"
                     BuildAction = "Compile"
@@ -507,7 +563,7 @@
                     BuildAction = "Compile"
                 />
                 <File
-                    RelPath = "Data\SqlDataProvider.cs"
+                    RelPath = "Data\NpgsqlDataProvider.cs"
                     SubType = "Code"
                     BuildAction = "Compile"
                 />
@@ -533,6 +589,11 @@
                 />
                 <File
                     RelPath = "Moderation\Components\ModerationAuditCollection.cs"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "Moderation\Components\ModerationQueueStatus.cs"
                     SubType = "Code"
                     BuildAction = "Compile"
                 />
@@ -583,6 +644,11 @@
                 />
                 <File
                     RelPath = "Moderation\Controls\MovePost.cs"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "Moderation\WebServices\QueueStatus.cs"
                     SubType = "Code"
                     BuildAction = "Compile"
                 />

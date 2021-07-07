@@ -44,8 +44,8 @@ namespace AspNetForums.Components {
             if (HttpContext.Current.Cache["SiteStatistics"] != null) {
                 return (Statistics) HttpContext.Current.Cache["SiteStatistics"];
             } else {
-                // Create Instance of the IWebForumsDataProviderBase
-                IWebForumsDataProviderBase dp = DataProvider.Instance();
+                // Create Instance of the IDataProviderBase
+                IDataProviderBase dp = DataProvider.Instance();
 
                 Statistics stats = dp.GetSiteStatistics();
                 HttpContext.Current.Cache.Insert("SiteStatistics", stats, null, DateTime.Now.AddHours(2), TimeSpan.Zero);

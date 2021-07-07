@@ -59,7 +59,7 @@ namespace AspNetForums.Controls {
                 } else if (null != Context.Request.Form["PostId"]) {
                     this.PostID = Convert.ToInt32(Context.Request.Form["PostID"]);
                 }
-            } catch (Exception e) {
+            } catch (Exception) {
                 HttpContext.Current.Response.Redirect(Globals.UrlMessage + Convert.ToInt32(Messages.PostDoesNotExist));
                 HttpContext.Current.Response.End();
             }
@@ -272,7 +272,7 @@ namespace AspNetForums.Controls {
 
                 // Add bullet
                 LiteralControl bullet = new LiteralControl();
-                bullet.Text = "<img src=\"" + Globals.ApplicationVRoot + "/skins/" + Globals.Skin + "/images/node.gif" + "\">";
+                bullet.Text = "<img src=\"" + Globals.ApplicationVRoot + "/Skins/" + Globals.Skin + "/images/node.gif" + "\">";
                 label.Controls.Add(bullet);
 
                 // Subject
@@ -328,7 +328,6 @@ namespace AspNetForums.Controls {
             Table table;
             TableRow tr;
             TableCell td;
-            Image image;
             
             // Create the table
             table = new Table();
@@ -486,8 +485,8 @@ namespace AspNetForums.Controls {
 
                 // Set the file paths to where the templates should be found
                 pathToHeaderTemplate = Globals.ApplicationVRoot + "/Skins/" + keyForHeaderTemplate;
-                pathToItemTemplate = Globals.ApplicationVRoot + "/skins/" + keyForItemTemplate;
-                pathToFooterTemplate = Globals.ApplicationVRoot + "/skins/" + Globals.Skin + keyForFooterTemplate;
+                pathToItemTemplate = Globals.ApplicationVRoot + "/Skins/" + keyForItemTemplate;
+                pathToFooterTemplate = Globals.ApplicationVRoot + "/Skins/" + Globals.Skin + keyForFooterTemplate;
 
                 // Attempt to get the skinned header template
                 if (repeater.HeaderTemplate == null)

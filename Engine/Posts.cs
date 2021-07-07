@@ -40,8 +40,8 @@ namespace AspNetForums {
             } else {
                 Post post;
 
-                // Create Instance of the IWebForumsDataProviderBase
-                IWebForumsDataProviderBase dp = DataProvider.Instance();
+                // Create Instance of the IDataProviderBase
+                IDataProviderBase dp = DataProvider.Instance();
 
                 post = dp.GetPost(postID, username, true);
 
@@ -72,8 +72,8 @@ namespace AspNetForums {
         /// 
         // ***********************************************************************/
         public static PostDetails GetPostDetails(int postID, String username, bool convertPostBodyFromRawToFormatted) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             if (convertPostBodyFromRawToFormatted) {
                 PostDetails retPost = dp.GetPostDetails(postID, username);
@@ -84,6 +84,26 @@ namespace AspNetForums {
                 return dp.GetPostDetails(postID, username);
         }
 
+
+        // *********************************************************************
+        //  IsUserTrackingThread
+        //
+        /// <summary>
+        /// Returns a boolean to indicate whether the user is tracking the thread.
+        /// </summary>
+        /// <param name="PostID">The ID of the Post to obtain information about.</param>
+        /// <param name="Username">The Username of the user viewing the post.</param>
+        /// 
+        // ***********************************************************************/
+        public static bool IsUserTrackingThread(int threadID, String username) {
+            if (username == null)
+                return false;
+
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
+
+            return dp.IsUserTrackingThread(threadID, username);
+        }
 
         // *********************************************************************
         //  GetPostDetails
@@ -102,8 +122,8 @@ namespace AspNetForums {
         /// 
         // ***********************************************************************/
         public static PostDetails GetPostDetails(int postID, String username) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             return dp.GetPostDetails(postID, username);
         }
@@ -122,8 +142,8 @@ namespace AspNetForums {
         /// 
         // ***********************************************************************/
         public static void ReverseThreadTrackingOptions(String username, int postID) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             dp.ReverseThreadTracking(username, postID);
         }
@@ -140,8 +160,8 @@ namespace AspNetForums {
         /// 
         // ********************************************************************/ 
         public static void MarkPostAsRead(int postID, string username) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             dp.MarkPostAsRead(postID, username);
         }
@@ -167,8 +187,8 @@ namespace AspNetForums {
             } else {
                 PostCollection posts;
 
-                // Create Instance of the IWebForumsDataProviderBase
-                IWebForumsDataProviderBase dp = DataProvider.Instance();
+                // Create Instance of the IDataProviderBase
+                IDataProviderBase dp = DataProvider.Instance();
 
                 // Get the post collection
                 posts = dp.GetThreadByPostID(postID, HttpContext.Current.User.Identity.Name);
@@ -179,6 +199,28 @@ namespace AspNetForums {
                 // Return the posts
                 return posts;
             }
+        }
+        
+        // *********************************************************************
+        //  GetTop25NewPosts
+        //
+        /// <summary>
+        /// This method returns the top 25 new posts.  These are the 25 posts
+        /// most recently posted to on the boards.
+        /// </summary>
+        /// <param name="PostID">Specifies the PostID of a post that belongs to the thread that we are 
+        /// interested in grabbing the messages from.</param>
+        /// <returns>A PostCollection containing the posts in the thread.</returns>
+        /// 
+        // ********************************************************************/
+        public static PostCollection GetTopNPopularPosts(string username, int postCount, int days)
+        {
+			return DataProvider.Instance().GetTopNPopularPosts(username, postCount, days);
+		}
+
+        public static PostCollection GetTopNNewPosts(string username, int postCount)
+        {
+            return DataProvider.Instance().GetTopNNewPosts(username, postCount);
         }
 	
         // *********************************************************************
@@ -193,10 +235,20 @@ namespace AspNetForums {
         /// 
         // ********************************************************************/ 
         public static PostCollection GetThreadByPostID(int postID, int currentPageIndex, int defaultPageSize, int sortBy, int sortOrder) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            PostCollection posts;
+            string postCollectionKey = postID.ToString();
 
-            return dp.GetThreadByPostID(postID, currentPageIndex, defaultPageSize, sortBy, sortOrder, HttpContext.Current.User.Identity.Name);			
+            // Attempt to retrieve from Cache
+            posts = (PostCollection) HttpContext.Current.Cache[postCollectionKey];
+
+            if (posts == null) {
+                // Create Instance of the IDataProviderBase
+                IDataProviderBase dp = DataProvider.Instance();
+
+                posts = dp.GetThreadByPostID(postID, currentPageIndex, defaultPageSize, sortBy, sortOrder, HttpContext.Current.User.Identity.Name);			
+            }
+
+            return posts;
         }
 
         // *********************************************************************
@@ -211,8 +263,8 @@ namespace AspNetForums {
         /// 
         // ********************************************************************/ 
         public static PostCollection GetThread(int threadID) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             return dp.GetThread(threadID);			
         }
@@ -235,8 +287,8 @@ namespace AspNetForums {
         /// 
         // ********************************************************************/ 
         public static PostCollection GetAllMessages(int forumID, ViewOptions forumView, int pagesBack) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             // make sure ForumView is set
             if (forumView == ViewOptions.NotSet)
@@ -256,8 +308,8 @@ namespace AspNetForums {
         /// 
         // ********************************************************************/ 
         public static int GetTotalPostCount() {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             return dp.GetTotalPostCount();
 
@@ -284,8 +336,8 @@ namespace AspNetForums {
             // convert the subject to the formatted version before adding the post
             postToAdd.Subject = PostSubjectRawToFormatted(postToAdd.Subject);
 
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             Post newPost = dp.AddPost(postToAdd, HttpContext.Current.User.Identity.Name);
 
@@ -311,8 +363,8 @@ namespace AspNetForums {
         public static void UpdatePost(Post post, string editedBy) {
             post.Subject = PostSubjectRawToFormatted(post.Subject);
 
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             dp.UpdatePost(post, editedBy);
         }
@@ -360,11 +412,15 @@ namespace AspNetForums {
             
             Emails.SendEmail(((Post) Posts.GetPost(postID, null)).Username, EmailTypeEnum.MessageDeleted, postID, reason);
 
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             dp.DeletePost(postID, approvedBy, reason);
         }
 
+        public enum PostType {
+            Post,
+            Vote
+        }
     }
 }

@@ -34,17 +34,28 @@ namespace AspNetForums {
         public static User GetUserInfo(String username, bool updateIsOnline) {
             string userKey = "UserInfo-" + username;
 
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Attempt to return the user from Cache for users not online to save
+            // us a trip to the database.
+            if (updateIsOnline == false) {
+                if (HttpContext.Current.Cache[userKey] != null)
+                    return (User) HttpContext.Current.Cache[userKey];
+            }
 
             // Let's not go to the database each time we need the user's info
             if (HttpContext.Current.Items[userKey] == null) {
+                // Create Instance of the IDataProviderBase
+                IDataProviderBase dp = DataProvider.Instance();
+
                 User user = dp.GetUserInfo(username, updateIsOnline);
 
                 // Hang on to the data for this request only
                 HttpContext.Current.Items[userKey] = user;
+            }
 
-                return user;
+            // Do we need to add the user into the Cache
+            if (updateIsOnline == false) {
+                if (HttpContext.Current.Cache[userKey] == null)
+                    HttpContext.Current.Cache.Insert(userKey, HttpContext.Current.Items[userKey], null, DateTime.Now.AddMinutes(1), TimeSpan.Zero);
             }
 
             return (User) HttpContext.Current.Items[userKey];
@@ -63,8 +74,8 @@ namespace AspNetForums {
         public static bool ChangePasswordForLoggedOnUser(string password, string newPassword) {
             User user;
 
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             // Get the current user
             user = Users.GetUserInfo(HttpContext.Current.User.Identity.Name, false);
@@ -99,14 +110,14 @@ namespace AspNetForums {
 
             // Read from the cache if available
             if (HttpContext.Current.Cache["WhoIsOnline"] == null) {
-                // Create Instance of the IWebForumsDataProviderBase
-                IWebForumsDataProviderBase dp = DataProvider.Instance();
+                // Create Instance of the IDataProviderBase
+                IDataProviderBase dp = DataProvider.Instance();
 
                 // Get the users
                 users = dp.WhoIsOnline(pastMinutes);
 
                 // Add to the Cache
-                HttpContext.Current.Cache.Insert("WhoIsOnline", users, null, DateTime.Now.AddSeconds(30), TimeSpan.Zero);
+                HttpContext.Current.Cache.Insert("WhoIsOnline", users, null, DateTime.Now.AddMinutes(5), TimeSpan.Zero);
 
             }
 
@@ -125,8 +136,8 @@ namespace AspNetForums {
         /// 
         // ********************************************************************/
         public static string GetUsernameByEmail(string emailAddress) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             return dp.GetUsernameByEmail(emailAddress);
         }
@@ -142,8 +153,8 @@ namespace AspNetForums {
         /// 
         // ********************************************************************/
         public static UserCollection FindUsersByName(int pageIndex, int pageSize, string usernameToMatch) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             return dp.FindUsersByName(pageIndex, pageSize, usernameToMatch);
         }
@@ -224,11 +235,25 @@ namespace AspNetForums {
         /// 
         // ********************************************************************/
         public static UserCollection GetAllUsers(int pageIndex, int pageSize, SortUsersBy sortBy, int sortOrder, string usernameBeginsWith) {
+            UserCollection users;
 
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Build a cache key
+            string usersKey = pageIndex.ToString() + pageSize.ToString() + sortBy + sortOrder.ToString() + usernameBeginsWith;
 
-            return dp.GetAllUsers(pageIndex, pageSize, sortBy, sortOrder, usernameBeginsWith);
+            // Serve from the cache when possible
+            users = (UserCollection) HttpContext.Current.Cache[usersKey];
+
+            if (users == null) {
+                // Create Instance of the IDataProviderBase
+                IDataProviderBase dp = DataProvider.Instance();
+
+                users =  dp.GetAllUsers(pageIndex, pageSize, sortBy, sortOrder, usernameBeginsWith);
+
+                // Insert the user collection into the cache for 120 seconds
+                HttpContext.Current.Cache.Insert(usersKey, users, null, DateTime.Now.AddSeconds(1800), TimeSpan.Zero);
+            }
+
+            return users;
         }
 
         // *********************************************************************
@@ -250,8 +275,8 @@ namespace AspNetForums {
 
             // Anonymous users are tracking in 15 minute intervals
             if (null == cookie) {
-                // Create Instance of the IWebForumsDataProviderBase
-                IWebForumsDataProviderBase dp = DataProvider.Instance();
+                // Create Instance of the IDataProviderBase
+                IDataProviderBase dp = DataProvider.Instance();
 
                 userId = Guid.NewGuid().ToString();
         
@@ -273,10 +298,23 @@ namespace AspNetForums {
         /// 
         // ********************************************************************/
         public static int GetAnonymousUsersOnline() {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            int anonymousUsersOnline = 0;
 
-            return dp.TotalAnonymousUsersOnline();
+            // Read from the cache if available
+            if (HttpContext.Current.Cache["AnonymousUsersOnlineCount"] == null) {
+                // Create Instance of the IDataProviderBase
+                IDataProviderBase dp = DataProvider.Instance();
+
+                // Get the number of anonymous users online
+                anonymousUsersOnline = dp.TotalAnonymousUsersOnline();
+
+                // Add to the Cache
+                HttpContext.Current.Cache.Insert("AnonymousUsersOnlineCount", anonymousUsersOnline, null, DateTime.Now.AddSeconds(30), TimeSpan.Zero);
+
+            }
+
+            return (int) HttpContext.Current.Cache["AnonymousUsersOnlineCount"];
+
         }
 
         // *********************************************************************
@@ -293,8 +331,8 @@ namespace AspNetForums {
 
             // Only update once every 24 hours
             if (HttpContext.Current.Cache["MostActiveUsers"] == null) {
-                // Create Instance of the IWebForumsDataProviderBase
-                IWebForumsDataProviderBase dp = DataProvider.Instance();
+                // Create Instance of the IDataProviderBase
+                IDataProviderBase dp = DataProvider.Instance();
 
                 // Get the collection
                 users = dp.GetMostActiveUsers();
@@ -348,8 +386,8 @@ namespace AspNetForums {
         /// 
         // ********************************************************************/
         public static bool UpdateUserProfile(User user) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
             bool updatePasswordSucceded = false;
 
             // we need to strip the <script> tags from input forms
@@ -406,8 +444,8 @@ namespace AspNetForums {
         /// 
         // ********************************************************************/
         public static UserCollection GetUsersByFirstCharacter(String FirstCharacter) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             return dp.GetUsersByFirstCharacter(FirstCharacter);			
         }
@@ -426,8 +464,8 @@ namespace AspNetForums {
         /// 
         // ********************************************************************/
         public static void UpdateUserInfoFromAdminPage(User user) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             dp.UpdateUserInfoFromAdminPage(user);			
         }
@@ -445,8 +483,8 @@ namespace AspNetForums {
         /// 
         // ********************************************************************/
         public static ModeratedForumCollection GetForumsModeratedByUser(String Username) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             return dp.GetForumsModeratedByUser(Username);			
         }
@@ -465,8 +503,8 @@ namespace AspNetForums {
         /// 
         // ********************************************************************/
         public static ModeratedForumCollection GetForumsNotModeratedByUser(String Username) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             return dp.GetForumsNotModeratedByUser(Username);			
         }
@@ -497,8 +535,8 @@ namespace AspNetForums {
         /// 
         // ********************************************************************/
         public static void ToggleOptions(string username, bool hideReadThreads, ViewOptions viewOptions) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             dp.ToggleOptions(username, hideReadThreads, viewOptions);			
         }
@@ -513,8 +551,8 @@ namespace AspNetForums {
         /// 
         // ********************************************************************/
         public static void AddModeratedForumForUser(ModeratedForum forum) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             dp.AddModeratedForumForUser(forum);			
         }
@@ -530,8 +568,8 @@ namespace AspNetForums {
         /// 
         // ********************************************************************/
         public static void RemoveModeratedForumForUser(ModeratedForum forum) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             dp.RemoveModeratedForumForUser(forum);			
         }
@@ -550,8 +588,8 @@ namespace AspNetForums {
         /// 
         // ********************************************************************/
         public static bool ValidUser(User user) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             return dp.ValidUser(user);
         }
@@ -576,8 +614,8 @@ namespace AspNetForums {
             if (!Regex.IsMatch(user.Username, "^[A-Za-z].*"))
                 return CreateUserStatus.InvalidFirstCharacter;
 
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             // do we have a password?
             if (user.Password == String.Empty) {
@@ -597,112 +635,7 @@ namespace AspNetForums {
             return status;
         }
 
-        // *********************************************************************
-        //  IsTop25User
-        //
-        /// <summary>
-        /// Determines whether the user is part of the top 25 posters.
-        /// </summary>
-        /// <returns>true if the user is, false if not</returns>
-        /// 
-        // ********************************************************************/
-        public static bool IsTop25User(string username) {
-            UserCollection users;
-            ArrayList top25Users = new ArrayList();
-
-            // Attempt to read from the Cache
-            if (HttpContext.Current.Cache["Top25Users"] == null) {
-                users = GetAllUsers(0, 25, SortUsersBy.Posts, 1, null);
-
-                // Add Username values in collection to string array
-                foreach (User u in users) {
-                    top25Users.Add(u.Username);
-                }
-
-                // Add to the Cache
-                HttpContext.Current.Cache.Insert("Top25Users", top25Users, null, DateTime.Now.AddHours(6), TimeSpan.Zero);
-            }
-
-            top25Users = (ArrayList) HttpContext.Current.Cache["Top25Users"];
-
-            // Is the user in the top 25?
-            if (top25Users.Contains(username)) 
-                return true;
-            else
-                return false;
-        }
-
-        // *********************************************************************
-        //  IsTop50User
-        //
-        /// <summary>
-        /// Determines whether the user is part of the top 26-50 posters.
-        /// </summary>
-        /// <returns>true if the user is, false if not</returns>
-        /// 
-        // ********************************************************************/
-        public static bool IsTop50User(string username) {
-            UserCollection users;
-            ArrayList top50Users = new ArrayList();
-
-            // Attempt to read from the Cache
-            if (HttpContext.Current.Cache["Top50Users"] == null) {
-                users = GetAllUsers(1, 25, SortUsersBy.Posts, 1, null);
-
-                // Add Username values in collection to string array
-                foreach (User u in users) {
-                    top50Users.Add(u.Username);
-                }
-
-                // Add to the Cache
-                HttpContext.Current.Cache.Insert("Top50Users", top50Users, null, DateTime.Now.AddHours(3), TimeSpan.Zero);
-            }
-
-            top50Users = (ArrayList) HttpContext.Current.Cache["Top50Users"];
-
-            // Is the user in the top 50?
-            if (top50Users.Contains(username)) 
-                return true;
-            else
-                return false;
-        }
-
-
-        // *********************************************************************
-        //  IsTop100User
-        //
-        /// <summary>
-        /// Determines whether the user is part of the top 51-100 posters.
-        /// </summary>
-        /// <returns>true if the user is, false if not</returns>
-        /// 
-        // ********************************************************************/
-        public static bool IsTop100User(string username) {
-            UserCollection users;
-            ArrayList top100Users = new ArrayList();
-
-            // Attempt to read from the Cache
-            if (HttpContext.Current.Cache["Top100Users"] == null) {
-                users = GetAllUsers(1, 50, SortUsersBy.Posts, 1, null);
-
-                // Add Username values in collection to string array
-                foreach (User u in users) {
-                    top100Users.Add(u.Username);
-                }
-
-                // Add to the Cache
-                HttpContext.Current.Cache.Insert("Top100Users", top100Users, null, DateTime.Now.AddHours(3), TimeSpan.Zero);
-            }
-
-            top100Users = (ArrayList) HttpContext.Current.Cache["Top100Users"];
-
-            // Is the user in the top 100?
-            if (top100Users.Contains(username)) 
-                return true;
-            else
-                return false;
-        }
-
+        
         // *********************************************************************
         //  TotalNumberOfUserAccounts
         //
@@ -713,12 +646,13 @@ namespace AspNetForums {
         /// 
         // ********************************************************************/
         public static int TotalNumberOfUserAccounts() {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             return dp.TotalNumberOfUserAccounts(null, null);
         }
 
+        
         // *********************************************************************
         //  TotalNumberOfUserAccounts
         //
@@ -729,8 +663,8 @@ namespace AspNetForums {
         /// 
         // ********************************************************************/
         public static int TotalNumberOfUserAccounts(string usernameBeginsWith, string usernameToFind) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             return dp.TotalNumberOfUserAccounts(usernameBeginsWith, usernameToFind);
         }

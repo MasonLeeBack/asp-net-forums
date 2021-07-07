@@ -22,7 +22,7 @@ namespace AspNetForums.Controls {
     public class ThreadList : DataList {
 
         User user;
-        String siteStyle;
+        String skinName;
 
         // *********************************************************************
         //  CreateChildControls
@@ -42,9 +42,9 @@ namespace AspNetForums.Controls {
 
             // Set the siteStyle for the page
             if (user != null)
-                siteStyle = user.SiteStyle;
+                skinName = user.Skin;
             else
-                siteStyle = Globals.SiteStyle;
+                skinName = Globals.Skin;
 
             // Viewstate is disabled
             this.EnableViewState = false;
@@ -128,7 +128,6 @@ namespace AspNetForums.Controls {
             Table table;
             TableRow tr;
             TableCell td;
-            LiteralControl literal;
             HyperLink link;
             PlaceHolder placeHolder;
             Label label;
@@ -262,16 +261,16 @@ namespace AspNetForums.Controls {
             if (Page != null) {
 
                 // Set the file paths to where the templates should be found
-                keyForHeaderTemplate = siteStyle + "/Templates/ThreadList-Header.ascx";
-                keyForItemTemplate = siteStyle + "/Templates/ThreadList-Item.ascx";
-                keyForAlternatingItemTemplate = siteStyle + "/Templates/ThreadList-AlternatingItem.ascx";
-                keyForFooterTemplate = siteStyle + "/Templates/ThreadList-Footer.ascx";
+                keyForHeaderTemplate = skinName + "/Templates/ThreadList-Header.ascx";
+                keyForItemTemplate = skinName + "/Templates/ThreadList-Item.ascx";
+                keyForAlternatingItemTemplate = skinName + "/Templates/ThreadList-AlternatingItem.ascx";
+                keyForFooterTemplate = skinName + "/Templates/ThreadList-Footer.ascx";
 
                 // Set the file paths to where the templates should be found
                 pathToHeaderTemplate = Globals.ApplicationVRoot + "/Skins/" + keyForHeaderTemplate;
                 pathToItemTemplate = Globals.ApplicationVRoot + "/Skins/" + keyForItemTemplate;
                 pathToAlternatingItemTemplate = Globals.ApplicationVRoot + "/Skins/" + keyForAlternatingItemTemplate;
-                pathToFooterTemplate = Globals.ApplicationVRoot + "/skins/" + keyForFooterTemplate;
+                pathToFooterTemplate = Globals.ApplicationVRoot + "/Skins/" + keyForFooterTemplate;
 
                 // Attempt to get the skinned header template
                 if (HeaderTemplate == null)
@@ -364,46 +363,46 @@ namespace AspNetForums.Controls {
             Thread thread = (Thread) container.DataItem;
 
             if (thread.IsPopular) {
-                img.ImageUrl = Globals.ApplicationVRoot + "/skins/" + siteStyle + "/images/topic-popular.gif";
+                img.ImageUrl = Globals.ApplicationVRoot + "/Skins/" + skinName + "/images/topic-popular.gif";
                 img.ToolTip = "Popular post";
             } else if (thread.IsAnnouncement) {
                 if (thread.HasRead) {
-                    img.ImageUrl = Globals.ApplicationVRoot + "/skins/" + siteStyle + "/images/topic-announce.gif";
+                    img.ImageUrl = Globals.ApplicationVRoot + "/Skins/" + skinName + "/images/topic-announce.gif";
                     img.ToolTip = "Announcement - post is pinned and allows no replies";
                 } else {
-                    img.ImageUrl = Globals.ApplicationVRoot + "/skins/" + siteStyle + "/images/topic-announce_notread.gif";
+                    img.ImageUrl = Globals.ApplicationVRoot + "/Skins/" + skinName + "/images/topic-announce_notread.gif";
                     img.ToolTip = "Announcement - post is pinned and allows no replies (Not Read)";
                 }
             } else if ((thread.IsPinned) && (thread.IsLocked)) {
                 if (thread.HasRead) {
-                    img.ImageUrl = Globals.ApplicationVRoot + "/skins/" + siteStyle + "/images/topic-pinned&locked.gif";
+                    img.ImageUrl = Globals.ApplicationVRoot + "/Skins/" + skinName + "/images/topic-pinned&locked.gif";
                     img.ToolTip = "Post is pinned and allows no replies";
                 } else {
-                    img.ImageUrl = Globals.ApplicationVRoot + "/skins/" + siteStyle + "/images/topic-pinned&locked_notread.gif";
+                    img.ImageUrl = Globals.ApplicationVRoot + "/Skins/" + skinName + "/images/topic-pinned&locked_notread.gif";
                     img.ToolTip = "Post is pinned and allows no replies (Not Read)";
                 }
             } else if (thread.IsPinned) {
                 if (thread.HasRead) {
-                    img.ImageUrl = Globals.ApplicationVRoot + "/skins/" + siteStyle + "/images/topic-pinned.gif";
+                    img.ImageUrl = Globals.ApplicationVRoot + "/Skins/" + skinName + "/images/topic-pinned.gif";
                     img.ToolTip = "Post is pinned";
                 } else {
-                    img.ImageUrl = Globals.ApplicationVRoot + "/skins/" + siteStyle + "/images/topic-pinned_notread.gif";
+                    img.ImageUrl = Globals.ApplicationVRoot + "/Skins/" + skinName + "/images/topic-pinned_notread.gif";
                     img.ToolTip = "Post is pinned (Not Read)";
                 }
             } else if (thread.IsLocked) {
                 if (thread.HasRead) {
-                    img.ImageUrl = Globals.ApplicationVRoot + "/skins/" + siteStyle + "/images/topic-locked.gif";
+                    img.ImageUrl = Globals.ApplicationVRoot + "/Skins/" + skinName + "/images/topic-locked.gif";
                     img.ToolTip = "Post allows no replies";
                 } else {
-                    img.ImageUrl = Globals.ApplicationVRoot + "/skins/" + siteStyle + "/images/topic-locked_notread.gif";
+                    img.ImageUrl = Globals.ApplicationVRoot + "/Skins/" + skinName + "/images/topic-locked_notread.gif";
                     img.ToolTip = "Post allows no replies (Not Read)";
                 }
             } else {
                 if (thread.HasRead) {
-                    img.ImageUrl = Globals.ApplicationVRoot + "/skins/" + siteStyle + "/images/topic.gif";
+                    img.ImageUrl = Globals.ApplicationVRoot + "/Skins/" + skinName + "/images/topic.gif";
                     img.ToolTip = "Post";
                 } else {
-                    img.ImageUrl = Globals.ApplicationVRoot + "/skins/" + siteStyle + "/images/topic_notread.gif";
+                    img.ImageUrl = Globals.ApplicationVRoot + "/Skins/" + skinName + "/images/topic_notread.gif";
                     img.ToolTip = "Post (Not Read)";
                 }
             }
@@ -521,7 +520,7 @@ namespace AspNetForums.Controls {
                             link.NavigateUrl = Globals.UrlShowPost + thread.PostID + "&PageIndex=" + (i+1).ToString();
                             placeHolder.Controls.Add(link);
 
-                            if ((i + 1) != totalPages) {
+                            if ((i + 1) < 3) {
                                 label = new Label();
                                 label.CssClass = "normalTextSmall";
                                 label.Text = ", ";
@@ -671,7 +670,7 @@ namespace AspNetForums.Controls {
             postDetails.Controls.Add(author);
 
             // Link to new post - we need to figure out what page the post is on
-            newPost.Text = "<img border=\"0\" src=\"" + Globals.ApplicationVRoot + "/skins/" + siteStyle + "/images/icon_mini_topic.gif\">";
+            newPost.Text = "<img border=\"0\" src=\"" + Globals.ApplicationVRoot + "/Skins/" + skinName + "/images/icon_mini_topic.gif\">";
             if (( (thread.Replies + 1) > Globals.PageSize) && ( (user != null) && (!user.ShowPostsAscending)) ) {
                 int totalPages = Paging.CalculateTotalPages(thread.Replies + 1, Globals.PageSize);
 

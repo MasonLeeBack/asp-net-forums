@@ -287,3 +287,39 @@ textarea
     background-color: White;
     border-color: Black;
 }
+
+/*****************************************************
+Menu Controls
+*****************************************************/
+A.linkMenuSink
+{
+    font-size: 0.7em;
+    font-family: Arial, Helvetica, sans-serif;
+    position: relative;
+}
+
+SPAN.PopupMenuSink
+{
+    position: relative;
+}
+
+DIV.popupMenu
+{
+    border: 1px solid blue;
+}
+
+DIV.popupTitle
+{
+    font-family: Arial, Helvetica, sans-serif;
+    color: white;
+    font-weight: bold;
+    background-color: #4455AA;
+}
+
+DIV.popupItem
+{
+    font-size: 0.8em;
+    font-weight: bold;
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: #DDEEFF;
+}

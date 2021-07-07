@@ -139,7 +139,7 @@ namespace AspNetForums {
 
             try {
                 SmtpMail.Send(msg);
-            } catch (Exception e) {
+            } catch (Exception) {
                 return false;
             }
 
@@ -180,12 +180,12 @@ namespace AspNetForums {
             messageToFormat = messageToFormat.Replace("<ModerateUrl>", Globals.UrlModeration);
             messageToFormat = messageToFormat.Replace("<SiteName>", Globals.SiteName);
             messageToFormat = messageToFormat.Replace("<UrlLogin>", Globals.UrlLogin);
-            messageToFormat = messageToFormat.Replace("<WebSiteUrl>", Globals.WebSiteUrl);
+            messageToFormat = messageToFormat.Replace("<WebSiteUrl>", Globals.UrlWebSite);
 
             // set information about the post, if a post was referenced
             if (postID > 0) {
                 // get information for the post
-                Post post = Posts.GetPost(postID, null);
+                Post post = Posts.GetPost(postID, Users.GetLoggedOnUser().Username);
 
                 messageToFormat = messageToFormat.Replace("<PostedBy>", post.Username);
                 messageToFormat = messageToFormat.Replace("<Subject>", post.Subject);
@@ -303,8 +303,8 @@ namespace AspNetForums {
         /// 
         // ********************************************************************/
         private static UserCollection GetEmailList(int postID) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             return dp.GetEmailList(postID);
         }		
@@ -320,8 +320,8 @@ namespace AspNetForums {
         /// 
         // ********************************************************************/
         public static EmailTemplateCollection GetEmailTemplateList() {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             return dp.GetEmailTemplateList();
         }
@@ -338,8 +338,8 @@ namespace AspNetForums {
         /// 
         // ********************************************************************/
         public static EmailTemplate GetEmailTemplateInfo(int emailTemplateID) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             return dp.GetEmailTemplateInfo(emailTemplateID);
         }
@@ -355,8 +355,8 @@ namespace AspNetForums {
         /// 
         // ********************************************************************/
         public static void UpdateEmailTemplate(EmailTemplate email) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             dp.UpdateEmailTemplate(email);
         }
@@ -376,8 +376,8 @@ namespace AspNetForums {
         public static void SendModeratorsNotification(int postID) {
             // get a list of moderators who are interested in hearing about the
             // particular post
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             UserCollection users = dp.GetModeratorsInterestedInPost(postID);
 

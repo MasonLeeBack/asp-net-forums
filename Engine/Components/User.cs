@@ -25,15 +25,17 @@ namespace AspNetForums.Components {
         String yahoo = "";                  // Yahoo IM
         String aim = "";                    // AOL IM
         String icq = "";                    // ICQ IM
-        String siteStyle = "";              // Default style used in the site
-        String iconExtension = "";          // Such as gif, jpg, etc.
+        String skin = "";                   // Default skin used in the site
+        AvatarType avatarType;              // Such as gif, jpg, etc.
         string dateFormat = "";             // Format for how the user views the date
+        string avatarUrl = "";              // Url to the Avatar user has provided
         int totalPosts;                     // Total posts by this user
+        byte[] attributes;                  // Bit field stored in db for special read-only user attribute switches
 
         ViewOptions _forumView;		        // how the user wishes to view the forums (flat/mixed/threaded)
 
-        bool hasIcon;                       // if the user has an icon
-        bool showIcon;                      // control whether or not a user's icon is shown
+        bool hasAvatar;                     // if the user has an icon
+        bool showAvatar;                    // control whether or not a user's icon is shown
         bool trusted;						// if the user is a trusted user or not
         bool approved;						// if the user is an approved user or not
         bool isModerator;                   // if the user is a moderator
@@ -64,6 +66,11 @@ namespace AspNetForums.Components {
             set { flatView = value; }
         }
 
+        public byte[] Attributes {
+            get { return attributes; }
+            set { attributes = value; }
+        }
+
         /// <summary>
         /// Returns the user's password.
         /// </summary>
@@ -89,39 +96,50 @@ namespace AspNetForums.Components {
         }
         
         /// <summary>
-        /// Extension of the user's icon
+        /// Returns the image type to be displayed
         /// </summary>
-        public string IconExtension {
-            get { return iconExtension; }
-            set { iconExtension = value; }
+        public AvatarType Avatar {
+            get { return avatarType; }
+            set { avatarType = value; }
         }
 
         /// <summary>
         /// Controls whether or not a user's icon is shown
         /// </summary>
-        public bool ShowIcon {
-            get { return showIcon; }
-            set { showIcon = value; }
+        public bool ShowAvatar {
+            get { return showAvatar; }
+            set { showAvatar = value; }
         }
 
         /// <summary>
-        /// Controls the style the user views the site in
+        /// Controls the skin the user views the site with
         /// </summary>
-        public string SiteStyle {
-            get { return siteStyle; }
-            set { siteStyle = value; }
+        public string Skin {
+            get { return skin; }
+            set { skin = value; }
         }
 
         /// <summary>
         /// Path to the user's image url
         /// </summary>
-        public String ImageUrl {
+        public String AvatarUrl {
             get {
-                string fileName = Username.Replace(" ", "_");
-                if (HasIcon)
-                    return Globals.ApplicationVRoot + "/UserIcons/" + fileName + "." + this.IconExtension;
+                // Do we have an avatar for this user?
+                if ((HasAvatar) && (ShowAvatar)) {
 
-                return null;
+                    // Is the avatar a URL?
+                    if (Avatar == AvatarType.url) {
+                        return avatarUrl;
+                    } else {
+                        string fileName = Username.Replace(" ", "_");
+                        return Globals.ApplicationVRoot + "/UserIcons/" + fileName + "." + Avatar.ToString();
+                    }
+                } else {
+                    return null;
+                }
+            }
+            set {
+                avatarUrl = value;
             }
         }
 
@@ -174,9 +192,9 @@ namespace AspNetForums.Components {
         /// <summary>
         /// Icon for the user
         /// </summary>
-        public bool HasIcon {
-            get { return hasIcon; }
-            set { hasIcon = value; }
+        public bool HasAvatar {
+            get { return hasAvatar; }
+            set { hasAvatar = value; }
         }
 
         /// <summary>
@@ -348,5 +366,11 @@ namespace AspNetForums.Components {
             set { _forumView = value;  }
         }
 
+    }
+
+    public enum AvatarType {
+        url,
+        gif,
+        jpg
     }
 }

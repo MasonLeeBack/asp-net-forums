@@ -33,15 +33,15 @@
           <td align="left" width="100%">
             <asp:RequiredFieldValidator id="usernameValidator" runat="server" ErrorMessage="" ControlToValidate="Username" CssClass="validationWarningSmall">Username is required.</asp:RequiredFieldValidator>
             <br>
-            <asp:RegularExpressionValidator id="RegularExpressionValidator1" ErrorMessage="" runat="server" ControlToValidate="Username" ValidationExpression="^[A-Za-z].*" CssClass="validationWarningSmall">Username must start with a-z/A-Z character.</asp:RegularExpressionValidator>
+            <asp:RegularExpressionValidator id="RegularExpressionValidator1" ErrorMessage="" runat="server" ControlToValidate="Username" ValidationExpression="^[A-Za-z].[^\<\>]*" CssClass="validationWarningSmall">Username must start with a-z/A-Z character.</asp:RegularExpressionValidator>
           </td>
         </tr>
         <span id="InstantSignUp" Visible="true" runat="server">
           <tr>
             <td align="right" nowrap>
-              <span class="normalTextSmallBold">
+              <div class="normalTextSmallBold">
               Password:
-            </span>
+            </div>
             </td>
             <td align="left">
               <asp:textbox id="Password" runat="server" columns="20"></asp:textbox>

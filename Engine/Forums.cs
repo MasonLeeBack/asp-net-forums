@@ -16,38 +16,6 @@ namespace AspNetForums {
     public class Forums {
 
         // *********************************************************************
-        //  GetAllButOneForum
-        //
-        /// <summary>
-        /// This method returns a list of all of the forums EXCEPT for the forum
-        /// the passed in PostID is from.  This is useful when listing the forums
-        /// to move a post awaiting moderation to.
-        /// </summary>
-        /// <param name="PostID">The Post that belongs to the Forum that we DO NOT want to return.</param>
-        /// <returns>A ForumCollection with all of the active forums except for the one specified.</returns>
-        /// <remarks>This method is called from the Moderation page, where a post can be moved from
-        /// one forum to another.  This method populates the listbox of forums to move the post to: in
-        /// essence we want to let the user move the post from its current forum to forum BUT the
-        /// forum it exists in.</remarks>
-        /// 
-        // ********************************************************************/ 
-        // TODO: REMOVE?
-        /*
-        public static ForumCollection GetAllButOneForum(int PostID) {
-            ForumCollection forums;
-
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
-
-            forums = dp.GetAllButOneForum(PostID);
-
-            forums.Sort();
-
-            return forums;
-        }
-        */
-
-
-        // *********************************************************************
         //  MarkAllThreadsRead
         //
         /// <summary>
@@ -58,8 +26,8 @@ namespace AspNetForums {
         /// 
         // ********************************************************************/ 
         public static void MarkAllThreadsRead(int forumID, string username) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             dp.MarkAllThreadsRead(forumID, username);
         }
@@ -160,8 +128,8 @@ namespace AspNetForums {
 
             // Optimize this method to ensure we only ask for the forums once per request
             if (HttpContext.Current.Items["ForumCollection" + showAllForums + username] ==  null) {
-                // Create Instance of the IWebForumsDataProviderBase
-                IWebForumsDataProviderBase dp = DataProvider.Instance();
+                // Create Instance of the IDataProviderBase
+                IDataProviderBase dp = DataProvider.Instance();
 
                 forums = dp.GetAllForums(showAllForums, username);
 
@@ -186,7 +154,7 @@ namespace AspNetForums {
         /// <summary>
         /// Used to return a narrow collection of forums that belong to a given forum id.
         /// The username is provied for personalization, e.g. if the user has new
-        /// posts in the forum
+        /// posts in the forum. Note, this only returns ParentID = 0 forums
         /// </summary>
         /// <param name="forumGroupId">Forum Group ID to retrieve forums for</param>
         /// <param name="username">Username making the request</param>
@@ -206,7 +174,7 @@ namespace AspNetForums {
             // Find all the forums that belong to the requested forumGroupId
             foreach (Forum f in allForums) {
 
-                if (f.ForumGroupId == forumGroupId)
+                if ((f.ForumGroupId == forumGroupId) && (f.ParentId == 0))
                     forumsBelongingToGroup.Add(f);
 
             }
@@ -216,6 +184,39 @@ namespace AspNetForums {
             return forumsBelongingToGroup;
         }
 
+
+        // *********************************************************************
+        //  GetChildForums
+        //
+        /// <summary>
+        /// Used to return a collection of forums for a parent forum
+        /// </summary>
+        /// <param name="forumGroupId">Forum Group ID to retrieve forums for</param>
+        /// <param name="username">Username making the request</param>
+        /// <param name="showAll">Show forums marked as inactive?</param>
+        /// 
+        // ***********************************************************************/
+        public ForumCollection GetChildForums(int forumId, string username, bool showAll) {
+            ForumCollection allForums;
+            ForumCollection subForums = new ForumCollection();
+
+            // First get all the forums
+            allForums = GetAllForums(showAll, username);
+
+            // Sort the forums
+            allForums.Sort();
+
+            // Find all the forums that belong to the requested forumGroupId
+            foreach (Forum f in allForums) {
+
+                if (f.ParentId == forumId)
+                    subForums.Add(f);
+            }
+
+            subForums.Sort();
+
+            return subForums;
+        }
 
         // *********************************************************************
         //  GetForumsByForumGroupId
@@ -245,13 +246,16 @@ namespace AspNetForums {
         /// thrown.</remarks>
         /// 
         // ***********************************************************************/
-        public static Forum GetForumInfo(int ForumID) {
+        public static Forum GetForumInfo(int forumID) {
 
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            if (null == HttpContext.Current.Items["ForumInfo" + forumID]) {
+                // Create Instance of the IDataProviderBase
+                IDataProviderBase dp = DataProvider.Instance();
 
-            //return dp.GetForumInfoByPostID(PostID);
-            return dp.GetForumInfo(ForumID, HttpContext.Current.User.Identity.Name);
+                HttpContext.Current.Items["ForumInfo" + forumID] = dp.GetForumInfo(forumID, HttpContext.Current.User.Identity.Name);
+            }
+
+            return (Forum) HttpContext.Current.Items["ForumInfo" + forumID];
         }
 
         // *********************************************************************
@@ -268,10 +272,12 @@ namespace AspNetForums {
         /// 
         // ***********************************************************************/
         public static int GetTotalThreadsInForum(int forumID, DateTime maxDateTime, DateTime minDateTime, string username, bool unreadThreadsOnly) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             return dp.GetTotalThreadsInForum(forumID, maxDateTime, minDateTime, username, unreadThreadsOnly);
+
 
         }
         
@@ -288,8 +294,8 @@ namespace AspNetForums {
         /// 
         // ***********************************************************************/
         public static Forum GetForumInfoByPostID(int PostID) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             return dp.GetForumInfoByPostID(PostID);			
         }
@@ -308,8 +314,8 @@ namespace AspNetForums {
         /// 
         // ***********************************************************************/
         public static Forum GetForumInfoByThreadID(int ThreadID) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             return dp.GetForumInfoByThreadID(ThreadID);
         }
@@ -327,8 +333,8 @@ namespace AspNetForums {
         /// 
         // ***********************************************************************/
         public static void DeleteForum(int forumID) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             dp.DeleteForum(forumID);
         }
@@ -347,8 +353,8 @@ namespace AspNetForums {
             // turn the description into a formatted version
             forum.Description = ForumDescriptionFormattedToRaw(forum.Description);
 
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             dp.AddForum(forum);
         }
@@ -368,8 +374,8 @@ namespace AspNetForums {
             // turn the description into a formatted version
             forum.Description = ForumDescriptionFormattedToRaw(forum.Description);
 
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             dp.UpdateForum(forum);
         }
@@ -402,8 +408,8 @@ namespace AspNetForums {
         /// 
         // ***********************************************************************/
         public static int TotalNumberOfForums() {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             return dp.TotalNumberOfForums();
         }

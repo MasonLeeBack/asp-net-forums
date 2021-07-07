@@ -18,10 +18,11 @@ namespace AspNetForums.Controls {
     [
         ParseChildren(true)
     ]
-    public class ShowAllUsers : WebControl, INamingContainer {
+    public class ShowAllUsers : SkinnedForumWebControl {
+		// Define the default skin for this control
+		private const string skinFilename = "Skin-ShowAllUsers.ascx";
 
         UserList userList;
-        Control controlTemplate;
         Paging pager;
         DropDownList sortDirection;
         DropDownList sortBy;
@@ -29,39 +30,22 @@ namespace AspNetForums.Controls {
         TextBox searchText;
         Button searchButton;
         bool isSearchMode = false;
-
+        
         // *********************************************************************
-        //  CreateChildControls
+        //  ShowAllUsers
         //
         /// <summary>
-        /// Loads a user control used as the 'template' for the control. A file
-        /// not found exception is thrown if the user control is not found.
+        /// Constructor
         /// </summary>
         /// 
-        // ********************************************************************/ 
-        protected override void CreateChildControls() {
+        // ********************************************************************/
+        public ShowAllUsers() {
+            // Set the default skin
+			if ( SkinFilename == null ) {
+				SkinFilename = skinFilename;
+			}
+		}
 
-            // Attempt to load the control. If this fails, we're done
-            try {
-                controlTemplate = Page.LoadControl(Globals.ApplicationVRoot + "/skins/" + Globals.Skin + "/Skins/Skin-ShowAllUsers.ascx");
-            }
-            catch (FileNotFoundException e) {
-                throw new Exception("The user control skins/Skins/Skin-ShowAllUsers.ascx was not found. Please ensure this file exists in your skins directory");
-            }
-
-            // Initialize the control template
-            InitializeControlTemplate();
-
-            // Get the total records used in the pager
-            pager.PageSize = 50;
-            pager.TotalRecords = Users.TotalNumberOfUserAccounts();
-
-            // If we're not a post back, go ahead and set the data
-            if (!Page.IsPostBack)
-                SetDataSource();
-
-            this.Controls.Add(controlTemplate);
-        }
 
         // *********************************************************************
         //  InitializeControlTemplate
@@ -72,18 +56,21 @@ namespace AspNetForums.Controls {
         /// </summary>
         /// 
         // ********************************************************************/ 
-        private void InitializeControlTemplate() {
+        override protected void InitializeSkin(Control skin) {
 
             // Find the UserList server control in our template
-            userList = (UserList) controlTemplate.FindControl("UserList");
+            userList = (UserList) skin.FindControl("UserList");
             userList.EnableViewState = false;
 
             // Find the pager control
-            pager = (Paging) controlTemplate.FindControl("Pager");
+            pager = (Paging) skin.FindControl("Pager");
+            // Get the total records used in the pager
+            pager.PageSize = 50;
+            pager.TotalRecords = Users.TotalNumberOfUserAccounts();
             pager.PageIndex_Changed += new System.EventHandler(PageIndex_Changed);
 
             // Find the sort by dropdownlist
-            sortBy = (DropDownList) controlTemplate.FindControl("SortBy");
+            sortBy = (DropDownList) skin.FindControl("SortBy");
             sortBy.Items.Add(new ListItem("Date Joined", ((int) Users.SortUsersBy.JoinedDate).ToString()));
             sortBy.Items.Add(new ListItem("Date Last Active", ((int) Users.SortUsersBy.LastActiveDate).ToString()));
             sortBy.Items.Add(new ListItem("Posts", ((int) Users.SortUsersBy.Posts).ToString()));
@@ -93,21 +80,23 @@ namespace AspNetForums.Controls {
             sortBy.SelectedIndexChanged += new System.EventHandler(SortByList_Changed);
 
             // Find the sorty direction dropdownlist
-            sortDirection = (DropDownList) controlTemplate.FindControl("SortDirection");
+            sortDirection = (DropDownList) skin.FindControl("SortDirection");
             sortDirection.AutoPostBack = true;
             sortDirection.Items.Add(new ListItem("Ascending", "0"));
             sortDirection.Items.Add(new ListItem("Descending", "1"));
             sortDirection.SelectedIndexChanged += new System.EventHandler(SortDirection_Changed);
 
             // Find the alpha picker
-            letterPicker = (AlphaPicker) controlTemplate.FindControl("AlphaPicker");
+            letterPicker = (AlphaPicker) skin.FindControl("AlphaPicker");
             letterPicker.Letter_Changed += new System.EventHandler(Letter_Changed);
 
             // Find the search text box and button
-            searchText = (TextBox) controlTemplate.FindControl("SeachForUser");
-            searchButton = (Button) controlTemplate.FindControl("SearchButton");
+            searchText = (TextBox) skin.FindControl("SeachForUser");
+            searchButton = (Button) skin.FindControl("SearchButton");
             searchButton.Click += new System.EventHandler(Search_Click);
 
+            if (!Page.IsPostBack)
+                SetDataSource();
         }
 
         // *********************************************************************
@@ -222,9 +211,7 @@ namespace AspNetForums.Controls {
         /// 
         // ********************************************************************/ 
         protected override void OnPreRender(EventArgs e) {
-
-                DataBind();
-
+			DataBind();
         }
 
         // *********************************************************************

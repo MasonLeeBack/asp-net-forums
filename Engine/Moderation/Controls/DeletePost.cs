@@ -106,9 +106,10 @@ namespace AspNetForums.Controls.Moderation {
 
             // Are we valid?
             if (reasonValidation.IsValid) {
+				Post post = (Post) Posts.GetPost(PostID, null);
                 Moderate.DeletePost(PostID, ForumUser.Username, reasonForDelete.Text, sendEmail.Checked);
 
-                HttpContext.Current.Response.Redirect(ReturnURL);
+                HttpContext.Current.Response.Redirect(Globals.UrlShowForum + post.ForumID);
                 HttpContext.Current.Response.End();
 
             }

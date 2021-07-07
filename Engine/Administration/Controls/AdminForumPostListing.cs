@@ -287,7 +287,7 @@ namespace AspNetForums.Controls.Admin {
 
             // add an edit and delete icon
             ImageButton imgbtnTmp = new ImageButton();
-            imgbtnTmp.ImageUrl = Globals.ImagePath + this.EditPostIconUrl;
+//            imgbtnTmp.ImageUrl = Globals.ImagePath + this.EditPostIconUrl;
             imgbtnTmp.CommandName = "edit";
             imgbtnTmp.DataBinding += new EventHandler(HandleImageButtonDataBind);
             imgbtnTmp.Command += new CommandEventHandler(PostAction_Click);
@@ -295,7 +295,7 @@ namespace AspNetForums.Controls.Admin {
             __parser.AddParsedSubObject(imgbtnTmp);
 
             imgbtnTmp = new ImageButton();
-            imgbtnTmp.ImageUrl = Globals.ImagePath + this.DeletePostIconUrl;
+//            imgbtnTmp.ImageUrl = Globals.ImagePath + this.DeletePostIconUrl;
             imgbtnTmp.CommandName = "delete";
             imgbtnTmp.DataBinding += new EventHandler(HandleImageButtonDataBind);
             imgbtnTmp.Command += new CommandEventHandler(PostAction_Click);

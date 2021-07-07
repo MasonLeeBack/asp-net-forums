@@ -68,7 +68,7 @@ namespace AspNetForums.Controls.Search {
         /// </summary>
         // ***********************************************************************/
         public void SearchButton_Click(Object sender, EventArgs e) {
-            Page.Response.Redirect(Globals.UrlSearch + "&searchText=" + Globals.HtmlEncode(textbox.Text));
+            Page.Response.Redirect(Globals.UrlQuickSearch + Globals.HtmlEncode(textbox.Text));
             Page.Response.End();
         }
 

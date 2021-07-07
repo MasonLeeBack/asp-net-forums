@@ -256,7 +256,7 @@ namespace AspNetForums.Controls {
             User userToDisplay = (User) container.DataItem;
 
             username.Text = userToDisplay.Username;
-            username.NavigateUrl = Globals.UrlUserProfile + userToDisplay.Username;
+            username.NavigateUrl = UrlUserNameRedirect + userToDisplay.Username;
         }
 
         // *********************************************************************
@@ -446,6 +446,26 @@ namespace AspNetForums.Controls {
         public bool UserCountIsAscending {
             get {return userCountIsAscending; }
             set {userCountIsAscending = value; }
+        }
+
+        // *********************************************************************
+        //  UrlUserNameRedirect
+        //
+        /// <summary>
+        /// Controls the default redirect URL 
+        /// </summary>
+        /// 
+        // ********************************************************************/
+        public string UrlUserNameRedirect {
+            get {
+				if ( ViewState["urlUserNameRedirect"] == null )
+					return Globals.UrlUserProfile;
+					
+				return ViewState["urlUserNameRedirect"].ToString();
+			}
+            set {
+				ViewState["urlUserNameRedirect"] = value;
+			}
         }
     }
 }

@@ -56,7 +56,7 @@ namespace AspNetForums.Controls {
             // Find the stats image
             img = (System.Web.UI.WebControls.Image) skin.FindControl("StatsImg");
             if (null != img)
-                img.ImageUrl = Globals.ApplicationVRoot + "/skins/" + Globals.Skin + "/images/icon_stats.gif";
+                img.ImageUrl = Globals.ApplicationVRoot + "/Skins/" + Globals.Skin + "/images/icon_stats.gif";
 
             // Find the total Users
             label = (Label) skin.FindControl("TotalUsers");

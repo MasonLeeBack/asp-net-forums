@@ -72,10 +72,12 @@ namespace AspNetForums.Controls {
         protected override void CreateChildControls() {
 
             // If the total number of records is less than the
-            // number of records we display in a page, we'll simply
-            // return.
-            if (TotalRecords <= PageSize)
+            // number of records we display in a page, we'll display page 1 of 1.
+            if ((TotalRecords <= PageSize) && (TotalRecords != 0)) {
+                Controls.Add(NavigationDisplay(true));
+                DisplayCurrentPage();
                 return;
+            }
 
             // Quick check to ensure the PageIndex is not greater than the Page Size
             if ((PageIndex > PageSize) || (PageIndex < 0))
@@ -85,7 +87,7 @@ namespace AspNetForums.Controls {
             numericalLinkButtons = new LinkButton[TotalPages];
 
             // Add the control to display navigation
-            Controls.Add(NavigationDisplay());
+            Controls.Add(NavigationDisplay(false));
 
         }
 
@@ -267,7 +269,7 @@ namespace AspNetForums.Controls {
         /// </summary>
         /// 
         // ********************************************************************/ 
-        private Control NavigationDisplay() {
+        private Control NavigationDisplay(bool singlePage) {
 
             Table table;
             TableRow tr;
@@ -291,24 +293,27 @@ namespace AspNetForums.Controls {
             td.Controls.Add(CreateCurrentPage());
             tr.Controls.Add(td);
 
-            // Create page navigation
-            td = new TableCell();
-            td.HorizontalAlign = HorizontalAlign.Right;
-            navigation = new Label();
-            navigationText = new Label();
-            navigationText.CssClass = "normalTextSmallBold";
-            navigationText.Text = "Goto to page: ";
+            // Do we have multiple pages to display?
+            if (!singlePage) {
+                // Create page navigation
+                td = new TableCell();
+                td.HorizontalAlign = HorizontalAlign.Right;
+                navigation = new Label();
+                navigationText = new Label();
+                navigationText.CssClass = "normalTextSmallBold";
+                navigationText.Text = "Goto to page: ";
 
-            navigation.Controls.Add(navigationText);
+                navigation.Controls.Add(navigationText);
             
-            // Numerical Paging
-            navigation.Controls.Add(CreateNumericalNavigation());
+                // Numerical Paging
+                navigation.Controls.Add(CreateNumericalNavigation());
 
-            // Prev Next Paging
-            navigation.Controls.Add(CreatePrevNextNavigation());
+                // Prev Next Paging
+                navigation.Controls.Add(CreatePrevNextNavigation());
 
-            td.Controls.Add(navigation);
-            tr.Controls.Add(td);
+                td.Controls.Add(navigation);
+                tr.Controls.Add(td);
+            }
 
             table.Controls.Add(tr);
 

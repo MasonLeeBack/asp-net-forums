@@ -17,7 +17,6 @@ namespace AspNetForums {
     // ***********************************************************************/
     public class UserRoles {
         const string rolesCookie = "AspNetForumsRoles";
-        string[] roles;
 
         // *********************************************************************
         //  GetUserRoles
@@ -39,15 +38,7 @@ namespace AspNetForums {
 
             // Get the roles this user is in
             if ((Context.Request.Cookies[rolesCookie] == null) || (Context.Request.Cookies[rolesCookie].Value == "")) {
-
-                userRoles = UserRoles.GetUserRoles(Context.User.Identity.Name);
-
-                // Format string array
-                formattedUserRoles = "";
-                foreach (string role in userRoles) {
-                    formattedUserRoles += role;
-                    formattedUserRoles += ";";
-                }
+                formattedUserRoles = String.Join(";", UserRoles.GetUserRoles(Context.User.Identity.Name));
 
                 // Create authentication ticket
                 FormsAuthenticationTicket ticket = new FormsAuthenticationTicket(
@@ -67,23 +58,169 @@ namespace AspNetForums {
                 Context.Response.Cookies[rolesCookie].Path = Globals.ApplicationVRoot;
                 Context.Response.Cookies[rolesCookie].Expires = DateTime.Now.AddMinutes(5);
             } else {
+
                 // Get roles from roles cookie
+                //
                 FormsAuthenticationTicket ticket = FormsAuthentication.Decrypt(Context.Request.Cookies[rolesCookie].Value);
 
-                //convert the string representation of the role data into a string array
-                ArrayList rolesArrayList = new ArrayList();
+                if (ticket.Name != Context.User.Identity.Name) {
 
-                foreach (String role in ticket.UserData.Split( new char[] {';'} )) {
+                    Context.Response.Cookies[rolesCookie].Expires = DateTime.Now;
 
-                    if (role != "")
-                        rolesArrayList.Add(role);
+                    return;
+
+                } else {
+
+                    //convert the string representation of the role data into a string array
+                    ArrayList rolesArrayList = new ArrayList();
+                    foreach (String role in ticket.UserData.Split( new char[] {';'} )) {
+                        if (role.Length > 0)
+                            rolesArrayList.Add(role);
+                    }
+
+                    userRoles = (string[]) rolesArrayList.ToArray(typeof(string));
                 }
 
-                userRoles = (String[]) rolesArrayList.ToArray(typeof(String));
             }
 
             // Add our own custom principal to the request containing the roles in the auth ticket
             Context.User = new GenericPrincipal(Context.User.Identity, userRoles);
+        }
+
+        // *********************************************************************
+        //  DeleteRole
+        //
+        /// <summary>
+        /// Deletes a security role and any associated forum and user connections
+        /// </summary>
+        // ***********************************************************************/
+        public static void DeleteRole(string role)
+        {
+            IDataProviderBase dp = DataProvider.Instance();
+            dp.DeleteRole(role);
+        }
+
+        // *********************************************************************
+        //  UpdateRole
+        //
+        /// <summary>
+        /// Updates the description for a given role.
+        /// </summary>
+        // ***********************************************************************/
+        public static void UpdateRole(string role, string description)
+        {
+            IDataProviderBase dp = DataProvider.Instance();
+            dp.UpdateRoleDescription(role, description);
+        }
+
+        // *********************************************************************
+        //  GetRoleDescription
+        //
+        /// <summary>
+        /// Get the description of a given role
+        /// </summary>
+        // ***********************************************************************/
+        public static string GetRoleDescription(string role)
+        {
+            IDataProviderBase dp = DataProvider.Instance();
+            return dp.GetRoleDescription(role);
+        }
+
+        // *********************************************************************
+        //  CreateNewRole
+        //
+        /// <summary>
+        /// Creates a new security role
+        /// </summary>
+        // ***********************************************************************/
+        public static void CreateNewRole(string role, string description)
+        {
+            IDataProviderBase dp = DataProvider.Instance();
+            dp.CreateNewRole(role, description);
+        }
+
+        // *********************************************************************
+        //  AddUserToRole
+        //
+        /// <summary>
+        /// Adds a specified user to a role
+        /// </summary>
+        // ***********************************************************************/
+        public static void AddUserToRole(string username, string role)
+        {
+            IDataProviderBase dp = DataProvider.Instance();
+            dp.AddUserToRole(username, role);
+        }
+
+        // *********************************************************************
+        //  AddForumToRole
+        //
+        /// <summary>
+        /// Adds a specified user to a role
+        /// </summary>
+        // ***********************************************************************/
+        public static void AddForumToRole(int forumID, string role)
+        {
+            IDataProviderBase dp = DataProvider.Instance();
+            dp.AddForumToRole(forumID, role);
+        }
+
+        // *********************************************************************
+        //  RemoveUserFromRole
+        //
+        /// <summary>
+        /// Removes the specified user from a role
+        /// </summary>
+        // ***********************************************************************/
+        public static void RemoveUserFromRole(string username, string role)
+        {
+            IDataProviderBase dp = DataProvider.Instance();
+            dp.RemoveUserFromRole(username, role);
+        }
+
+        // *********************************************************************
+        //  RemoveForumFromRole
+        //
+        /// <summary>
+        /// Removes the specified forum from a role
+        /// </summary>
+        // ***********************************************************************/
+        public static void RemoveForumFromRole(int forumID, string role)
+        {
+            IDataProviderBase dp = DataProvider.Instance();
+            dp.RemoveForumFromRole(forumID, role);
+        }
+
+        // *********************************************************************
+        //  GetAllRoles
+        //
+        /// <summary>
+        /// All the roles that the system supports
+        /// </summary>
+        /// <returns>String array of roles</returns>
+        // ***********************************************************************/
+        public static String[] GetAllRoles() 
+        {
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
+
+            return dp.GetAllRoles();
+        }
+
+        // *********************************************************************
+        //  GetForumRoles
+        //
+        /// <summary>
+        /// Get all of the roles that a given forum belongs to
+        /// </summary>
+        /// <returns>String array of roles</returns>
+        // ***********************************************************************/
+        public static String[] GetForumRoles(int forumID) 
+        {
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
+
+            return dp.GetForumRoles(forumID);
         }
 
         // *********************************************************************
@@ -95,9 +232,10 @@ namespace AspNetForums {
         /// <param name="username">Name of user to retrieve roles for</param>
         /// <returns>String array of roles</returns>
         // ***********************************************************************/
-        public static String[] GetUserRoles(string username) {
-            // Create Instance of the IWebForumsDataProviderBase
-            IWebForumsDataProviderBase dp = DataProvider.Instance();
+        public static String[] GetUserRoles(string username) 
+        {
+            // Create Instance of the IDataProviderBase
+            IDataProviderBase dp = DataProvider.Instance();
 
             return dp.GetUserRoles(username);
         }
@@ -117,6 +255,5 @@ namespace AspNetForums {
             Context.Response.Cookies[rolesCookie].Expires = new System.DateTime(1999, 10, 12);
             Context.Response.Cookies[rolesCookie].Path = Globals.ApplicationVRoot;
         }
-
     }
 }

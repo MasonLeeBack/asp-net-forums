@@ -252,11 +252,7 @@ namespace AspNetForums.Components {
 
             StringWriter textBuffer = new StringWriter();
 
-            if ( _fontsize > 5 ) {
-                textBuffer.Write("<font size=\"" + _fontsize + "\"><b>\r\n");
-            } else {
-                textBuffer.Write("<font size=\"" + _fontsize + "\">\r\n");
-            }
+            textBuffer.Write("<font size=\"" + _fontsize + "\">\r\n");
 
             textBuffer.Write("<pre>");
             if(language == Language.CS) {
@@ -268,11 +264,7 @@ namespace AspNetForums.Components {
             }
             textBuffer.Write("</pre>");
 
-            if ( _fontsize > 5 ) {
-                textBuffer.Write("</b></font>");
-            } else {
-                textBuffer.Write("</font>");
-            }
+            textBuffer.Write("</font>");
 
             return textBuffer.ToString();
         }
